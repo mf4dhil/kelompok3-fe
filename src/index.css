@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: 'Poppins', sans-serif;
+  --color-primary: #2B1B17;
+  --color-secondary: #C86D51;
+  --color-tertiary: #E8A857;
+  --color-quaternary: #FAF5EE;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-primary);
+  color: var(--color-quaternary);
+}
