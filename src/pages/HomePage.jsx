@@ -1,4 +1,4 @@
-import Navbar from '../components/Navbar';
+import NavbarHome from '../components/NavbarHome';
 import Hero from '../components/Hero';
 import WhyChoose from '../components/WhyChoose';
 import MenuFavorit from '../components/MenuFavorit';
@@ -10,7 +10,7 @@ import Footer from '../components/Footer';
 export default function HomePage() {
   return (
     <div className="scroll-smooth min-h-screen bg-quaternary text-tertiary">
-      <Navbar />
+      <NavbarHome />
       <Hero />
       <WhyChoose />
       <MenuFavorit />
