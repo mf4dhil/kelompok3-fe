@@ -4,7 +4,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="border-b border-secondary/30 bg-[var(--color-primary)]/80 backdrop-blur sticky top-0 z-50">
+    <header className="border-b border-secondary/30 bg-primary/80 backdrop-blur sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
