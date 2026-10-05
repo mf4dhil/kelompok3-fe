@@ -1,0 +1,32 @@
+function Navbar() {
+  return (
+    <header className="h-20 bg-[#2B1B17] border-b border-[#2B1B17]/10 flex items-center justify-end px-6">
+      {/* <div>
+        <h1 className="text-2xl font-bold text-white">
+          Dashboard
+        </h1>
+
+        <p className="text-sm text-white">
+          Selamat datang di CakeOrder
+        </p>
+      </div> */}
+
+      <div className="flex items-center gap-3">
+        <div className="text-right">
+          <p className="font-semibold text-[#2B1B17]">
+            Admin
+          </p>
+          <p className="text-xs text-[#2B1B17]/60">
+            Administrator
+          </p>
+        </div>
+
+        <div className="w-10 h-10 rounded-full bg-[#C86D51] text-white flex items-center justify-center font-semibold">
+          A
+        </div>
+      </div>
+    </header>
+  );
+}
+
+export default Navbar;
