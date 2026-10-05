@@ -10,7 +10,7 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <span className="text-2xl" role="img" aria-label="cake">🍰</span>
-            <span className="font-bold text-xl tracking-tight text-quaternary">SweetCake</span>
+            <span className="font-bold text-xl tracking-tight text-quaternary">NIFACake</span>
           </div>
 
           {/* Desktop Navigation */}
