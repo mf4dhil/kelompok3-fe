@@ -1,6 +1,6 @@
 function Navbar() {
   return (
-    <header className="h-20 bg-[#2B1B17] border-b border-[#2B1B17]/10 flex items-center justify-end px-6">
+    <header className="h-20 bg-primary border-b border-primary/10 flex items-center justify-end px-6">
       {/* <div>
         <h1 className="text-2xl font-bold text-white">
           Dashboard
@@ -13,15 +13,15 @@ function Navbar() {
 
       <div className="flex items-center gap-3">
         <div className="text-right">
-          <p className="font-semibold text-[#2B1B17]">
+          <p className="font-semibold text-primary">
             Admin
           </p>
-          <p className="text-xs text-[#2B1B17]/60">
+          <p className="text-xs text-primary/60">
             Administrator
           </p>
         </div>
 
-        <div className="w-10 h-10 rounded-full bg-[#C86D51] text-white flex items-center justify-center font-semibold">
+        <div className="w-10 h-10 rounded-full bg-secondary text-white flex items-center justify-center font-semibold">
           A
         </div>
       </div>
