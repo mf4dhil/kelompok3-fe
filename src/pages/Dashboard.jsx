@@ -1,7 +1,7 @@
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
-import StatCard from '../components/Card';
-import OrderTable from '../components/Table';
+// import Navbar from '../components/dashboard/Navbar';
+// import Sidebar from '../components/dashboard/Sidebar';
+import StatCard from '../components/dashboard/Card';
+import OrderTable from '../components/dashboard/Table';
 
 function Dashboard() {
   // Data dummy
@@ -53,15 +53,8 @@ function Dashboard() {
   const pesananSelesai = orders.filter((order) => order.status === 'Selesai').length;
 
   return (
-    <div className='flex min-h-screen bg-quaternary'>
-      {/* Sidebar */}
-      <Sidebar />
-      {/* Content */}
-      <div className='flex-1 min-w-0'>
-        {/* Navbar */}
-        <Navbar />
-        {/* Main */}
-        <main className='p-6'>
+    
+        <>
           {/* Heading */}
           <div className='mb-6'>
             <h2 className='text-xl font-bold text-primary'>Ringkasan Pesanan</h2>
@@ -80,12 +73,7 @@ function Dashboard() {
           <div className='mt-6'>
             <OrderTable orders={orders} />
           </div>
-        </main>
-
-        {/* Footer */}
-        <footer className='border-t border-primary/10 bg-quaternary py-4 text-center text-sm text-primary/60'>© 2026 CakeOrder - Sistem Pre-Order Kue</footer>
-      </div>
-    </div>
+        </>
   );
 }
 

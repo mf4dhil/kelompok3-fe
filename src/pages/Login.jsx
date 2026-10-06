@@ -16,15 +16,15 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      //   const response = await axios.post(
-      //     "http://localhost:3000/api/login",
-      //     {
-      //       code,
-      //       password,
-      //     }
-      //   );
+        const response = await axios.post(
+          "http://localhost:3000/api/login",
+          {
+            code,
+            password,
+          }
+        );
 
-      //   console.log(response.data);
+        console.log(response.data);
 
       navigate('/dashboard');
     } catch (error) {
@@ -53,11 +53,11 @@ export default function Login() {
                 <UserRound size={20} className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400' />
 
                 <input
-                  type='text'
+                  type='email'
                   placeholder='Masukkan code'
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  className='w-full border border-gray-300 rounded-lg py-3 pl-11 pr-4 outline-none focus:border-secondary focus:ring-1 focus:ring-secondary'
+                  className='w-full text-black border border-gray-300 rounded-lg py-3 pl-11 pr-4 outline-none focus:border-secondary focus:ring-1 focus:ring-secondary'
                 />
               </div>
             </div>
@@ -74,7 +74,7 @@ export default function Login() {
                   placeholder='Masukkan password'
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className='w-full border border-gray-300 rounded-lg py-3 pl-11 pr-11 outline-none focus:border-secondary focus:ring-1 focus:ring-secondary'
+                  className='w-full text-black border border-gray-300 rounded-lg py-3 pl-11 pr-11 outline-none focus:border-secondary focus:ring-1 focus:ring-secondary'
                 />
 
                 {/* Tombol lihat password */}

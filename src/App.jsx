@@ -2,17 +2,24 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-// import HomePage from "../pages/HomePage"
-// import Dashboard from "../pages/Dashboard"
-// import Login from "../pages/Login"
+import Users from './pages/Users';
+import ProdukAdmin from './pages/ProdukAdmin';
+import DashboardAdmin from './components/layouts/DashboardAdmin';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route element={<DashboardAdmin />}>
+          <Route path='/dashboard' Component={Dashboard} />
+          <Route path='/produk-admin' Component={ProdukAdmin} />
+          <Route path='/users' Component={Users} />
+        </Route>
+
         <Route path='/' Component={HomePage} />
         <Route path='/login' Component={Login} />
-        <Route path='/dashboard' Component={Dashboard} />
+
+        
       </Routes>
     </BrowserRouter>
   );

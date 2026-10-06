@@ -1,6 +1,16 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 function Sidebar() {
+  const location = useLocation();
+
+  const menuClass = (path) => {
+    if (location.pathname === path) {
+      return "block px-4 py-3 rounded-lg bg-[#C86D51] text-white";
+    }
+
+    return "block px-4 py-3 rounded-lg hover:bg-[#C86D51] transition";
+  };
+
   return (
     <aside className="w-64 min-h-screen bg-[#2B1B17] text-white">
       {/* Logo */}
@@ -23,16 +33,26 @@ function Sidebar() {
         <ul className="space-y-2">
           <li>
             <Link
-              to="/"
-              className="block px-4 py-3 rounded-lg bg-[#C86D51] text-white"
+              to="/dashboard"
+              className={menuClass("/dashboard")}
             >
               Dashboard
             </Link>
           </li>
+
+          <li>
+            <Link
+              to="/users"
+              className={menuClass("/users")}
+            >
+              User
+            </Link>
+          </li>
+
           <li>
             <Link
               to="/produk"
-              className="block px-4 py-3 rounded-lg hover:bg-[#C86D51] transition"
+              className={menuClass("/produk")}
             >
               Produk Kue
             </Link>
@@ -40,7 +60,7 @@ function Sidebar() {
           <li>
             <Link
               to="/preorder"
-              className="block px-4 py-3 rounded-lg hover:bg-[#C86D51] transition"
+              className={menuClass("/preorder")}
             >
               Pre-Order
             </Link>
@@ -48,7 +68,7 @@ function Sidebar() {
           <li>
             <Link
               to="/pelanggan"
-              className="block px-4 py-3 rounded-lg hover:bg-[#C86D51] transition"
+              className={menuClass("/pelanggan")}
             >
               Pelanggan
             </Link>
@@ -56,7 +76,7 @@ function Sidebar() {
           <li>
             <Link
               to="/laporan"
-              className="block px-4 py-3 rounded-lg hover:bg-[#C86D51] transition"
+              className={menuClass("/laporan")}
             >
               Laporan
             </Link>
