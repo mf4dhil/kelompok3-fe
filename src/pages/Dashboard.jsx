@@ -1,7 +1,7 @@
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
-import StatCard from '../components/Card';
-import OrderTable from '../components/Table';
+// import Navbar from '../components/dashboard/Navbar';
+// import Sidebar from '../components/dashboard/Sidebar';
+import StatCard from '../components/dashboard/Card';
+import OrderTable from '../components/dashboard/Table';
 
 function Dashboard() {
   // Data dummy

@@ -1,6 +1,6 @@
 import React from 'react';
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
+import Sidebar from '../dashboard/Sidebar';
+import Navbar from '../dashboard/Navbar';
 import { Outlet } from 'react-router-dom';
 
 function DashboardAdmin() {
