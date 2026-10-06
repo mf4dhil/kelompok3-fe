@@ -51,7 +51,7 @@ function Sidebar() {
 
           <li>
             <Link
-              to="/produk"
+              to="/produk-admin"
               className={menuClass("/produk")}
             >
               Produk Kue

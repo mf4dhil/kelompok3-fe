@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { UserRound, LockKeyhole, Eye, EyeOff } from 'lucide-react';
+import { login } from '../services/authService';
 
 export default function Login() {
   const navigate = useNavigate();
 
-  const [code, setCode] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const [showPassword, setShowPassword] = useState(false);
@@ -16,19 +17,13 @@ export default function Login() {
     e.preventDefault();
 
     try {
-        const response = await axios.post(
-          "http://localhost:3000/api/login",
-          {
-            code,
-            password,
-          }
-        );
+      const response = await login({ email, password });
 
-        console.log(response.data);
+      console.log(response.data);
 
       navigate('/dashboard');
     } catch (error) {
-      setError(error.response?.data?.message || 'Code atau password salah');
+      setError(error.message|| 'Code atau password salah');
     }
   };
 
@@ -45,19 +40,18 @@ export default function Login() {
           {error && <div className='bg-red-100 text-red-600 px-4 py-3 rounded-lg mb-5 text-sm'>{error}</div>}
 
           <form onSubmit={handleLogin}>
-            {/* Code */}
             <div className='mb-5'>
-              <label className='block text-gray-700 mb-2'>Code</label>
+              <label className='block text-gray-700 mb-2'>Email</label>
 
               <div className='relative'>
                 <UserRound size={20} className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400' />
 
                 <input
                   type='email'
-                  placeholder='Masukkan code'
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className='w-full text-black border border-gray-300 rounded-lg py-3 pl-11 pr-4 outline-none focus:border-secondary focus:ring-1 focus:ring-secondary'
+                  placeholder='Masukkan email'
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className='w-full border border-gray-300 rounded-lg py-3 pl-11 pr-4 outline-none focus:border-secondary focus:ring-1 focus:ring-secondary text-slate-700!'
                 />
               </div>
             </div>
@@ -74,7 +68,7 @@ export default function Login() {
                   placeholder='Masukkan password'
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className='w-full text-black border border-gray-300 rounded-lg py-3 pl-11 pr-11 outline-none focus:border-secondary focus:ring-1 focus:ring-secondary'
+                  className='w-full text-slate-700! border border-gray-300 rounded-lg py-3 pl-11 pr-11 outline-none focus:border-secondary focus:ring-1 focus:ring-secondary'
                 />
 
                 {/* Tombol lihat password */}
