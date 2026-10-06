@@ -36,6 +36,17 @@ export const updateProduct = async (id, productData) => {
   }
 };
 
+// Add variants to an existing product (admin) - only adds NEW variants
+export const addProductVariants = async (id, variants) => {
+  try {
+    const response = await api.put(`/products/${id}/variants`, { variants });
+    return response.data;
+  } catch (error) {
+    console.error('Gagal menambahkan varian:', error);
+    throw error;
+  }
+};
+
 // Update product status (admin)
 export const updateProductStatus = async (id, status) => {
   try {
