@@ -53,6 +53,15 @@ function Sidebar() {
 
           <li>
             <Link
+              to="/master-data"
+              className={menuClass("/master-data")}
+            >
+              Master Data
+            </Link>
+          </li>
+
+          <li>
+            <Link
               to="/preorder"
               className={menuClass("/preorder")}
             >
