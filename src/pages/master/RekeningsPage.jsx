@@ -131,9 +131,9 @@ export default function RekeningsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-secondary/10">
-                {items.map((item) => (
+                {items.map((item, index) => (
                   <tr key={item.id} className="hover:bg-quaternary/50 transition">
-                    <td className="px-6 py-4 font-mono text-xs text-primary/70">{item.id}</td>
+                    <td className="px-6 py-4 font-mono text-xs text-primary/70">{index + 1}</td>
                     <td className="px-6 py-4 font-medium text-primary">{item.bank_name}</td>
                     <td className="px-6 py-4 text-primary/80">{item.account_number}</td>
                     <td className="px-6 py-4 text-primary/80">{item.account_name}</td>
