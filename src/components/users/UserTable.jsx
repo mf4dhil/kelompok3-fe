@@ -231,7 +231,7 @@ function UserTable({ users, loading, onEdit, onDelete }) {
             <th className={thClass}>Nama</th>
             <th className={thClass}>Email</th>
             <th className={thClass}>Phone</th>
-            <th className={thClass}>Alamat</th>
+            <th className={thClass}>address</th>
             <th className={thClass}>Role</th>
             <th className={`${thClass} text-center`}>Aksi</th>
           </tr>
