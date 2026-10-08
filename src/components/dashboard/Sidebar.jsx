@@ -11,7 +11,7 @@ function Sidebar() {
     return "block px-4 py-3 rounded-lg hover:bg-[#C86D51] transition";
   };
 
-  return (    <aside className='w-64 min-h-screen bg-[#2B1B17] text-white'>
+  return (    <aside className='fixed top-0 left-0 h-screen w-64 overflow-y-auto bg-[#2B1B17] text-white'>
       {/* Logo */}
       <div className='h-20 flex items-center justify-center border-b border-white/10'>
         <div className='text-center'>

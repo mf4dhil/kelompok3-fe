@@ -9,7 +9,7 @@ function DashboardAdmin() {
       {/* Sidebar */}
       <Sidebar />
       {/* Content */}
-      <div className='flex-1 min-w-0 '>
+      <div className='flex-1 min-w-0 ml-64'>
         {/* Navbar */}
         <Navbar />
         {/* Main */}
