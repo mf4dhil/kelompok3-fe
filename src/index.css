@@ -17,3 +17,17 @@ body {
   background-color: var(--color-primary);
   color: var(--color-quaternary);
 }
+
+/* Input & Form Element Colors */
+input, textarea, select {
+  color: var(--color-primary) !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: rgb(43 27 23 / 50%) !important;
+}
+
+select option {
+  background-color: white;
+  color: var(--color-primary);
+}
