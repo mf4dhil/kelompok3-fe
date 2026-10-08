@@ -1,5 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { shapesService } from '../../services/masterDataService';
+
+// Helper generator slug
+const createSlug = (text) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-');
+};
 
 export default function ShapesPage() {
   const [items, setItems] = useState([]);
@@ -44,18 +55,25 @@ export default function ShapesPage() {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    // Payload yang dilengkapi dengan slug
+    const payload = {
+      name,
+      slug: createSlug(name),
+    };
+
     try {
       if (editingItem) {
-        await shapesService.update(editingItem.id, { name });
+        await shapesService.update(editingItem.id, payload);
         setSuccess('Shape berhasil diperbarui');
       } else {
-        await shapesService.create({ name });
+        await shapesService.create(payload);
         setSuccess('Shape berhasil ditambahkan');
       }
       setIsModalOpen(false);
       fetchItems();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 
@@ -68,7 +86,7 @@ export default function ShapesPage() {
       setSuccess('Shape berhasil dihapus');
       fetchItems();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 

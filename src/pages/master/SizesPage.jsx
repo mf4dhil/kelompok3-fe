@@ -9,7 +9,12 @@ export default function SizesPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+
+  // Form State sesuai struktur data API
   const [name, setName] = useState('');
+  const [value, setValue] = useState('');
+  const [unit, setUnit] = useState('rb');
+  const [isActive, setIsActive] = useState(true);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -18,7 +23,7 @@ export default function SizesPage() {
       const res = await sizesService.getAll();
       setItems(Array.isArray(res) ? res : res.data || []);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
@@ -31,12 +36,18 @@ export default function SizesPage() {
   const openAddModal = () => {
     setEditingItem(null);
     setName('');
+    setValue('');
+    setUnit('rb');
+    setIsActive(true);
     setIsModalOpen(true);
   };
 
   const openEditModal = (item) => {
     setEditingItem(item);
     setName(item.name || '');
+    setValue(item.value || '');
+    setUnit(item.unit || 'rb');
+    setIsActive(item.is_active ?? true);
     setIsModalOpen(true);
   };
 
@@ -44,18 +55,27 @@ export default function SizesPage() {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    // Payload yang dikirim disesuaikan dengan struktur backend
+    const payload = {
+      name,
+      value: parseFloat(value) || 0,
+      unit,
+      is_active: isActive,
+    };
+
     try {
       if (editingItem) {
-        await sizesService.update(editingItem.id, { name });
+        await sizesService.update(editingItem.id, payload);
         setSuccess('Size berhasil diperbarui');
       } else {
-        await sizesService.create({ name });
+        await sizesService.create(payload);
         setSuccess('Size berhasil ditambahkan');
       }
       setIsModalOpen(false);
       fetchItems();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 
@@ -68,7 +88,7 @@ export default function SizesPage() {
       setSuccess('Size berhasil dihapus');
       fetchItems();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 
@@ -77,7 +97,7 @@ export default function SizesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-primary">Master Data: Sizes (Ukuran)</h1>
-          <p className="text-primary/60 text-sm">Kelola ukuran kue (18cm, 20cm, Regular, Large)</p>
+          <p className="text-primary/60 text-sm">Kelola ukuran kue, harga, dan ketersediaannya</p>
         </div>
         <button
           onClick={openAddModal}
@@ -108,8 +128,11 @@ export default function SizesPage() {
             <table className="w-full text-left text-sm">
               <thead className="bg-quaternary border-b border-secondary/20 text-xs font-semibold text-primary uppercase">
                 <tr>
-                  <th className="px-6 py-3 w-20">ID</th>
+                  <th className="px-6 py-3 w-16">ID</th>
                   <th className="px-6 py-3">Nama Size</th>
+                  <th className="px-6 py-3">Ukuran</th>
+                  <th className="px-6 py-3">Satuan</th>
+                  <th className="px-6 py-3">Status</th>
                   <th className="px-6 py-3 text-right">Aksi</th>
                 </tr>
               </thead>
@@ -118,6 +141,21 @@ export default function SizesPage() {
                   <tr key={item.id} className="hover:bg-quaternary/50 transition">
                     <td className="px-6 py-4 font-mono text-xs text-primary/70">{item.id}</td>
                     <td className="px-6 py-4 font-medium text-primary">{item.name}</td>
+                    <td className="px-6 py-4 text-primary">
+                      {parseFloat(item.value).toLocaleString('id-ID')}
+                    </td>
+                    <td className="px-6 py-4 text-primary/80">{item.unit}</td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          item.is_active
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {item.is_active ? 'Aktif' : 'Nonaktif'}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <button
                         onClick={() => openEditModal(item)}
@@ -156,11 +194,53 @@ export default function SizesPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  placeholder="Contoh: 18cm, 20cm, Medium"
+                  placeholder="Contoh: XS, M, L, XL"
                   className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-tertiary"
                   autoFocus
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-primary/70 mb-1">
+                    Ukuran <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    required
+                    placeholder="10"
+                    className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-tertiary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-primary/70 mb-1">
+                    Satuan (Unit)
+                  </label>
+                  <input
+                    type="text"
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value)}
+                    placeholder="cm"
+                    className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-tertiary"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
+                  className="w-4 h-4 text-tertiary rounded focus:ring-tertiary"
+                />
+                <label htmlFor="is_active" className="text-xs text-primary/80 select-none">
+                  Status Aktif
+                </label>
+              </div>
+
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
