@@ -80,6 +80,15 @@ function Sidebar() {
 
           <li>
             <Link
+              to="/bahan-baku"
+              className={menuClass("/bahan-baku")}
+            >
+              Bahan Baku
+            </Link>
+          </li>
+
+          <li>
+            <Link
               to="/laporan"
               className={menuClass("/laporan")}
             >

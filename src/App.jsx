@@ -17,6 +17,7 @@ import PreOrdersPage from './pages/PreOrdersPage';
 import LaporanPage from './pages/LaporanPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Pelanggan from './pages/Pelanggan';
+import BahanBaku from './pages/BahanBaku';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
             <Route path='/preorder' Component={PreOrdersPage} />
             <Route path='/laporan' Component={LaporanPage} />
             <Route path='/pelanggan' Component={Pelanggan} />
+            <Route path="/bahan-baku" Component={BahanBaku} />
             
             {/* Master Data Routes */}
             <Route path='/master-data' Component={MasterDataPage}>
