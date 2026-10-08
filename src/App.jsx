@@ -17,7 +17,7 @@ import PreOrdersPage from './pages/PreOrdersPage';
 import LaporanPage from './pages/LaporanPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Pelanggan from './pages/Pelanggan';
-import BahanBaku from './pages/BahanBaku';
+
 
 // Material & Inventory
 import MaterialsPage from './pages/materials/MaterialsPage';
@@ -46,7 +46,6 @@ function App() {
             <Route path='/preorder' Component={PreOrdersPage} />
             <Route path='/laporan' Component={LaporanPage} />
             <Route path='/pelanggan' Component={Pelanggan} />
-            <Route path="/bahan-baku" Component={BahanBaku} />
             
             {/* Master Data Routes */}
             <Route path='/master-data' Component={MasterDataPage}>
