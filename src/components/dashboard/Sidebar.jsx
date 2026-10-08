@@ -96,6 +96,41 @@ function Sidebar() {
             </Link>
           </li>
         </ul>
+
+        {/* Inventory Section */}
+        <p className='text-xs text-[#FAF5EE]/50 mt-4 mb-2'>INVENTORY</p>
+        <ul className='space-y-2'>
+          <li>
+            <Link to="/materials" className={menuClass("/materials")}>
+              Bahan Baku
+            </Link>
+          </li>
+          <li>
+            <Link to="/materials/low-stock" className={menuClass("/materials/low-stock")}>
+              Stok Rendah
+            </Link>
+          </li>
+          <li>
+            <Link to="/material-purchases" className={menuClass("/material-purchases")}>
+              Pembelian Bahan
+            </Link>
+          </li>
+        </ul>
+
+        {/* Finance Section */}
+        <p className='text-xs text-[#FAF5EE]/50 mt-4 mb-2'>KEUANGAN</p>
+        <ul className='space-y-2'>
+          <li>
+            <Link to="/expense-categories" className={menuClass("/expense-categories")}>
+              Kategori Pengeluaran
+            </Link>
+          </li>
+          <li>
+            <Link to="/expenses" className={menuClass("/expenses")}>
+              Pengeluaran
+            </Link>
+          </li>
+        </ul>
       </div>
     </aside>
   );

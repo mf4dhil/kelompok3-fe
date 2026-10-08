@@ -1,33 +1,24 @@
-import { useState, useEffect } from 'react';
-import { categoriesService } from '../../services/masterDataService';
+import React, { useState, useEffect } from 'react';
+import { expenseCategoryService } from '../../services/expenseService';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 
-// Helper generator slug
-const createSlug = (text) => {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-');
-};
-
-export default function CategoriesPage() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(false);
+export default function ExpenseCategoriesPage() {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [name, setName] = useState('');
 
-  const fetchItems = async () => {
+  const fetchCategories = async () => {
     setLoading(true);
     setError('');
     try {
-      const res = await categoriesService.getAll();
-      setItems(Array.isArray(res) ? res : res.data || []);
+      const data = await expenseCategoryService.getAll();
+      setCategories(Array.isArray(data) ? data : data.data || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -36,7 +27,7 @@ export default function CategoriesPage() {
   };
 
   useEffect(() => {
-    fetchItems();
+    fetchCategories();
   }, []);
 
   const openAddModal = () => {
@@ -55,38 +46,32 @@ export default function CategoriesPage() {
     e.preventDefault();
     setError('');
     setSuccess('');
-
-    // Payload yang dilengkapi dengan slug
-    const payload = {
-      name,
-      slug: createSlug(name),
-    };
-
     try {
       if (editingItem) {
-        await categoriesService.update(editingItem.id, payload);
-        setSuccess('Category berhasil diperbarui');
+        await expenseCategoryService.update(editingItem.id, { name: name.trim() });
+        setSuccess('Kategori pengeluaran berhasil diperbarui');
       } else {
-        await categoriesService.create(payload);
-        setSuccess('Category berhasil ditambahkan');
+        await expenseCategoryService.create({ name: name.trim() });
+        setSuccess('Kategori pengeluaran berhasil ditambahkan');
       }
+
       setIsModalOpen(false);
-      fetchItems();
+      fetchCategories();
     } catch (err) {
-      setError(err.response?.data?.message || err.message);
+      setError(err.message);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Yakin ingin menghapus category ini?')) return;
+    if (!window.confirm('Yakin ingin menghapus kategori ini?')) return;
     setError('');
     setSuccess('');
     try {
-      await categoriesService.delete(id);
-      setSuccess('Category berhasil dihapus');
-      fetchItems();
+      await expenseCategoryService.delete(id);
+      setSuccess('Kategori pengeluaran berhasil dihapus');
+      fetchCategories();
     } catch (err) {
-      setError(err.response?.data?.message || err.message);
+      setError(err.message);
     }
   };
 
@@ -94,53 +79,58 @@ export default function CategoriesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-primary">Master Data: Categories (Kategori)</h1>
-          <p className="text-primary/60 text-sm">Kelola kategori kue (Chocolate, Fruit, Vegan, dsb)</p>
+          <h1 className="text-2xl font-bold text-primary">Kategori Pengeluaran</h1>
+          <p className="text-primary/60 text-sm">Kelola kategori untuk klasifikasi uang keluar / expense</p>
         </div>
         <button
           onClick={openAddModal}
-          className="px-4 py-2 bg-tertiary text-primary rounded-lg font-semibold hover:bg-tertiary/90 transition shadow-sm text-sm"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-tertiary text-primary rounded-lg font-semibold hover:bg-tertiary/90 transition shadow-sm text-sm"
         >
-          + Tambah Category
+          <Plus size={16} />
+          Tambah Kategori
         </button>
       </div>
 
       {error && (
-        <div className="p-4 rounded-lg bg-red-100 border border-red-200 text-red-700 text-sm">{error}</div>
+        <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          {error}
+        </div>
       )}
       {success && (
-        <div className="p-4 rounded-lg bg-green-100 border border-green-200 text-green-700 text-sm">{success}</div>
+        <div className="p-4 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
+          {success}
+        </div>
       )}
 
       <div className="bg-white rounded-xl border border-secondary/20 overflow-hidden shadow-sm">
         {loading ? (
-          <div className="p-8 text-center text-primary/50">Memuat data...</div>
-        ) : items.length === 0 ? (
-          <div className="p-8 text-center text-primary/50">Belum ada data category.</div>
+          <div className="p-12 text-center text-primary/50">Memuat data kategori...</div>
+        ) : categories.length === 0 ? (
+          <div className="p-12 text-center text-primary/50">Belum ada data kategori pengeluaran.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-quaternary border-b border-secondary/20 text-xs font-semibold text-primary uppercase">
                 <tr>
-                  <th className="px-6 py-3 w-20">ID</th>
-                  <th className="px-6 py-3">Nama Category</th>
-                  <th className="px-6 py-3 text-right">Aksi</th>
+                  <th className="px-6 py-3 w-16">No</th>
+                  <th className="px-6 py-3">Nama Kategori</th>
+                  <th className="px-6 py-3 text-right w-64">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-secondary/10">
-                {items.map((item, index) => (
-                  <tr key={item.id} className="hover:bg-quaternary/50 transition">
-                    <td className="px-6 py-4 font-mono text-xs text-primary/70">{index + 1}</td>
-                    <td className="px-6 py-4 font-medium text-primary">{item.name}</td>
+                {categories.map((cat, index) => (
+                  <tr key={cat.id} className="hover:bg-quaternary/50 transition">
+                    <td className="px-6 py-4 text-primary/70">{index + 1}</td>
+                    <td className="px-6 py-4 font-medium text-primary">{cat.name}</td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <button
-                        onClick={() => openEditModal(item)}
+                        onClick={() => openEditModal(cat)}
                         className="px-3 py-1 bg-tertiary/20 text-primary hover:bg-tertiary/40 rounded transition text-xs font-semibold"
                       >
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => handleDelete(cat.id)}
                         className="px-3 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded transition text-xs font-semibold"
                       >
                         Hapus
@@ -154,25 +144,29 @@ export default function CategoriesPage() {
         )}
       </div>
 
+      {/* Modal Add/Edit */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl relative text-primary">
-            <h2 className="text-lg font-bold mb-4">{editingItem ? 'Edit Category' : 'Tambah Category Baru'}</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative text-primary">
+            <h2 className="text-lg font-bold mb-4">
+              {editingItem ? 'Edit Kategori' : 'Tambah Kategori Baru'}
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-4 text-sm">
               <div>
                 <label className="block text-xs font-medium text-primary/70 mb-1">
-                  Nama Category <span className="text-red-500">*</span>
+                  Nama Kategori <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  placeholder="Contoh: Chocolate, Fruit, Vegan"
+                  placeholder="Contoh: Bahan Baku, Packaging, Operasional"
                   className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-tertiary"
+                  autoFocus
                 />
               </div>
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-4 border-t border-secondary/10">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
