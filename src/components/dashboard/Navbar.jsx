@@ -5,19 +5,21 @@ import { logout } from '../../utils/auth';
 
 function Navbar() {
   const [showMenu, setShowMenu] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     const confirmLogout = window.confirm(
       'Apakah kamu yakin ingin logout?'
     );
 
     if (!confirmLogout) return;
 
-    logout();
+    setIsLoggingOut(true);
+    await logout();
   };
 
   return (
-    <header className="h-20 bg-primary border-b border-primary/10 flex items-center justify-end px-6">
+    <header className="sticky top-0 z-10 h-20 bg-primary border-b border-primary/10 flex items-center justify-end px-6">
       <div className="flex items-center gap-3">
 
         <div className="text-right">

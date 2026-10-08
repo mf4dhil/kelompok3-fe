@@ -761,60 +761,62 @@ export default function PreOrdersPage() {
                   </select>
                 </div>
               )}
-              <div>
-                <label className="block text-xs font-medium text-primary/70 mb-1">
-                  Bukti Pembayaran (Upload Gambar / File)
-                </label>
-                <div className="space-y-2">
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/jpg"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        setPaymentForm((prev) => ({
-                          ...prev,
-                          proof_file: file,
-                          proof_preview: URL.createObjectURL(file),
-                        }));
-                      }
-                    }}
-                    className="w-full text-xs text-primary file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-secondary/20 file:text-primary hover:file:bg-secondary/30 bg-secondary/10 border border-secondary/25 rounded-lg p-1.5 focus:outline-none"
-                  />
-
-                  {/* Preview Gambar Baru yang dipilih */}
-                  {paymentForm.proof_preview && (
-                    <div className="mt-2 p-2 bg-quaternary rounded-lg border border-secondary/20">
-                      <p className="text-[10px] text-primary/60 mb-1 font-semibold">Preview Bukti Baru:</p>
-                      <img
-                        src={paymentForm.proof_preview}
-                        alt="Preview Bukti"
-                        className="max-h-36 w-auto rounded border border-secondary/20 object-contain"
-                      />
-                    </div>
-                  )}
-
-                  {/* Preview Gambar Lama jika ada di Database */}
-                  {!paymentForm.proof_preview && paymentForm.payment_proof && (
-                    <div className="mt-2 p-2 bg-quaternary rounded-lg border border-secondary/20">
-                      <p className="text-[10px] text-primary/60 mb-1 font-semibold">Bukti Tersimpan:</p>
-                      <img
-                        src={
-                          paymentForm.payment_proof.startsWith('http')
-                            ? paymentForm.payment_proof
-                            : `http://localhost:3000${paymentForm.payment_proof}`
+              {paymentForm.payment_method === 'transfer' && (
+                <div>
+                  <label className="block text-xs font-medium text-primary/70 mb-1">
+                    Bukti Pembayaran (Upload Gambar / File)
+                  </label>
+                  <div className="space-y-2">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/jpg"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setPaymentForm((prev) => ({
+                            ...prev,
+                            proof_file: file,
+                            proof_preview: URL.createObjectURL(file),
+                          }));
                         }
-                        alt="Bukti Tersimpan"
-                        className="max-h-36 w-auto rounded border border-secondary/20 object-contain"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                      <p className="text-[10px] text-primary/50 break-all mt-1">{paymentForm.payment_proof}</p>
-                    </div>
-                  )}
+                      }}
+                      className="w-full text-xs text-primary file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-secondary/20 file:text-primary hover:file:bg-secondary/30 bg-secondary/10 border border-secondary/25 rounded-lg p-1.5 focus:outline-none"
+                    />
+
+                    {/* Preview Gambar Baru yang dipilih */}
+                    {paymentForm.proof_preview && (
+                      <div className="mt-2 p-2 bg-quaternary rounded-lg border border-secondary/20">
+                        <p className="text-[10px] text-primary/60 mb-1 font-semibold">Preview Bukti Baru:</p>
+                        <img
+                          src={paymentForm.proof_preview}
+                          alt="Preview Bukti"
+                          className="max-h-36 w-auto rounded border border-secondary/20 object-contain"
+                        />
+                      </div>
+                    )}
+
+                    {/* Preview Gambar Lama jika ada di Database */}
+                    {!paymentForm.proof_preview && paymentForm.payment_proof && (
+                      <div className="mt-2 p-2 bg-quaternary rounded-lg border border-secondary/20">
+                        <p className="text-[10px] text-primary/60 mb-1 font-semibold">Bukti Tersimpan:</p>
+                        <img
+                          src={
+                            paymentForm.payment_proof.startsWith('http')
+                              ? paymentForm.payment_proof
+                              : `http://localhost:3000${paymentForm.payment_proof}`
+                          }
+                          alt="Bukti Tersimpan"
+                          className="max-h-36 w-auto rounded border border-secondary/20 object-contain"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                        <p className="text-[10px] text-primary/50 break-all mt-1">{paymentForm.payment_proof}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
