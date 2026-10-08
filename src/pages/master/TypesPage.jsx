@@ -1,5 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { typesService, categoriesService } from '../../services/masterDataService';
+
+// Helper function untuk generate slug dari nama
+const createSlug = (text) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-');
+};
 
 export default function TypesPage() {
   const [items, setItems] = useState([]);
@@ -58,8 +69,15 @@ export default function TypesPage() {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    // Payload yang menyertakan name, slug, dan category_id
+    const payload = { 
+      name, 
+      slug: createSlug(name),
+      category_id: parseInt(categoryId) 
+    };
+
     try {
-      const payload = { name, category_id: parseInt(categoryId) };
       if (editingItem) {
         await typesService.update(editingItem.id, payload);
         setSuccess('Type berhasil diperbarui');
@@ -70,7 +88,7 @@ export default function TypesPage() {
       setIsModalOpen(false);
       fetchItems();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 
@@ -83,7 +101,7 @@ export default function TypesPage() {
       setSuccess('Type berhasil dihapus');
       fetchItems();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 

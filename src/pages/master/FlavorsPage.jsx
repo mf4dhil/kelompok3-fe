@@ -1,5 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { flavorsService } from '../../services/masterDataService';
+
+// Helper generator slug
+const createSlug = (text) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-');
+};
 
 export default function FlavorsPage() {
   const [items, setItems] = useState([]);
@@ -44,18 +55,25 @@ export default function FlavorsPage() {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    // Payload yang dilengkapi dengan slug
+    const payload = {
+      name,
+      slug: createSlug(name),
+    };
+
     try {
       if (editingItem) {
-        await flavorsService.update(editingItem.id, { name });
+        await flavorsService.update(editingItem.id, payload);
         setSuccess('Flavor berhasil diperbarui');
       } else {
-        await flavorsService.create({ name });
+        await flavorsService.create(payload);
         setSuccess('Flavor berhasil ditambahkan');
       }
       setIsModalOpen(false);
       fetchItems();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 
@@ -68,7 +86,7 @@ export default function FlavorsPage() {
       setSuccess('Flavor berhasil dihapus');
       fetchItems();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 

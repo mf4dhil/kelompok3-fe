@@ -1,5 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { categoriesService } from '../../services/masterDataService';
+
+// Helper generator slug
+const createSlug = (text) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-');
+};
 
 export default function CategoriesPage() {
   const [items, setItems] = useState([]);
@@ -44,18 +55,25 @@ export default function CategoriesPage() {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    // Payload yang dilengkapi dengan slug
+    const payload = {
+      name,
+      slug: createSlug(name),
+    };
+
     try {
       if (editingItem) {
-        await categoriesService.update(editingItem.id, { name });
+        await categoriesService.update(editingItem.id, payload);
         setSuccess('Category berhasil diperbarui');
       } else {
-        await categoriesService.create({ name });
+        await categoriesService.create(payload);
         setSuccess('Category berhasil ditambahkan');
       }
       setIsModalOpen(false);
       fetchItems();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 
@@ -68,7 +86,7 @@ export default function CategoriesPage() {
       setSuccess('Category berhasil dihapus');
       fetchItems();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 
@@ -110,9 +128,9 @@ export default function CategoriesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-secondary/10">
-                {items.map((item) => (
+                {items.map((item, index) => (
                   <tr key={item.id} className="hover:bg-quaternary/50 transition">
-                    <td className="px-6 py-4 font-mono text-xs text-primary/70">{item.id}</td>
+                    <td className="px-6 py-4 font-mono text-xs text-primary/70">{index + 1}</td>
                     <td className="px-6 py-4 font-medium text-primary">{item.name}</td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <button
