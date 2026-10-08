@@ -1,4 +1,4 @@
-import api from './apiClient';
+import api from "./api";
 
 const handleError = (error) => {
   const message = error.response?.data?.msg || error.message || 'Terjadi kesalahan';
