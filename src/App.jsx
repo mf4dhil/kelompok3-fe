@@ -13,6 +13,8 @@ import SizesPage from './pages/master/SizesPage';
 import CategoriesPage from './pages/master/CategoriesPage';
 import TypesPage from './pages/master/TypesPage';
 import RekeningsPage from './pages/master/RekeningsPage';
+import PreOrdersPage from './pages/PreOrdersPage';
+import LaporanPage from './pages/LaporanPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -25,6 +27,8 @@ function App() {
             <Route path='/dashboard' Component={Dashboard} />
             <Route path='/produk-admin' Component={ProdukAdmin} />
             <Route path='/users' Component={Users} />
+            <Route path='/preorder' Component={PreOrdersPage} />
+            <Route path='/laporan' Component={LaporanPage} />
             
             {/* Master Data Routes */}
             <Route path='/master-data' Component={MasterDataPage}>
@@ -39,6 +43,7 @@ function App() {
           </Route>
         </Route>
 
+        <Route path='/preorder' Component={PreOrdersPage} />
         <Route path='/produk' Component={Produk} />
         <Route path='/login' Component={Login} />
       </Routes>
