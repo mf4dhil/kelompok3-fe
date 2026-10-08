@@ -93,6 +93,7 @@ export default function ProdukAdmin() {
 
   useEffect(() => {
     fetchProducts();
+    fetchMasterData();
   }, []);
 
   // ========== PRODUCT MODAL (Simple Add/Edit) ==========
@@ -327,10 +328,10 @@ export default function ProdukAdmin() {
   };
 
   // Helper: find name by id
-  const getShapeName = (id) => shapes.find(s => s.id === id)?.name || '-';
-  const getSizeName = (id) => sizes.find(s => s.id === id)?.name || '-';
-  const getFlavorName = (id) => flavors.find(f => f.id === id)?.name || '-';
-  const getTypeName = (id) => types.find(t => t.id === id)?.name || '-';
+  const getShapeName = (id) => shapes.find(s => String(s.id) === String(id))?.name || '-';
+  const getSizeName = (id) => sizes.find(s => String(s.id) === String(id))?.name || '-';
+  const getFlavorName = (id) => flavors.find(f => String(f.id) === String(id))?.name || '-';
+  const getTypeName = (id) => types.find(t => String(t.id) === String(id))?.name || '-';
 
   // Format currency
   const formatPrice = (price) =>

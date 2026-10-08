@@ -426,14 +426,14 @@ function UserForm({ form, setForm, onSubmit, onCancel, isEdit }) {
             </div>
           )}
 
-          {/* Alamat */}
+          {/* address */}
           <div className="md:col-span-2">
-            <label className={labelClass}>Alamat (opsional)</label>
+            <label className={labelClass}>address (opsional)</label>
             <textarea
               name="address"
               value={form.address}
               onChange={handleChange}
-              placeholder="Masukkan alamat"
+              placeholder="Masukkan address"
               rows="3"
               className={inputClass}
             />
