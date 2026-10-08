@@ -1,14 +1,15 @@
-import api from "./api";
+import api from './api';
 
 const handleError = (error) => {
-  const message = error.response?.data?.msg || error.message || 'Terjadi kesalahan';
+  const message = error.response?.data?.message || error.message || 'Terjadi kesalahan';
   throw new Error(message);
 };
 
-export const ordersService = {
+// Expense Categories
+export const expenseCategoryService = {
   getAll: async (params = {}) => {
     try {
-      const { data } = await api.get('/orders', { params });
+      const { data } = await api.get('/expense-categories', { params });
       return data;
     } catch (error) {
       return handleError(error);
@@ -17,7 +18,7 @@ export const ordersService = {
 
   getById: async (id) => {
     try {
-      const { data } = await api.get(`/orders/${id}`);
+      const { data } = await api.get(`/expense-categories/${id}`);
       return data;
     } catch (error) {
       return handleError(error);
@@ -26,7 +27,7 @@ export const ordersService = {
 
   create: async (payload) => {
     try {
-      const { data } = await api.post('/orders', payload);
+      const { data } = await api.post('/expense-categories', payload);
       return data;
     } catch (error) {
       return handleError(error);
@@ -35,25 +36,7 @@ export const ordersService = {
 
   update: async (id, payload) => {
     try {
-      const { data } = await api.patch(`/orders/${id}`, payload);
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  updateStatus: async (id, status) => {
-    try {
-      const { data } = await api.patch(`/orders/${id}/status`, { status });
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  updatePayment: async (id, payload) => {
-    try {
-      const { data } = await api.patch(`/orders/${id}/payment`, payload);
+      const { data } = await api.patch(`/expense-categories/${id}`, payload);
       return data;
     } catch (error) {
       return handleError(error);
@@ -62,7 +45,7 @@ export const ordersService = {
 
   delete: async (id) => {
     try {
-      const { data } = await api.delete(`/orders/${id}`);
+      const { data } = await api.delete(`/expense-categories/${id}`);
       return data;
     } catch (error) {
       return handleError(error);
@@ -70,11 +53,11 @@ export const ordersService = {
   },
 };
 
-// Customer Service
-export const customersService = {
+// Expenses
+export const expenseService = {
   getAll: async (params = {}) => {
     try {
-      const { data } = await api.get('/customers', { params });
+      const { data } = await api.get('/expenses', { params });
       return data;
     } catch (error) {
       return handleError(error);
@@ -83,7 +66,7 @@ export const customersService = {
 
   getById: async (id) => {
     try {
-      const { data } = await api.get(`/customers/${id}`);
+      const { data } = await api.get(`/expenses/${id}`);
       return data;
     } catch (error) {
       return handleError(error);
@@ -92,7 +75,7 @@ export const customersService = {
 
   create: async (payload) => {
     try {
-      const { data } = await api.post('/customers', payload);
+      const { data } = await api.post('/expenses', payload);
       return data;
     } catch (error) {
       return handleError(error);
@@ -101,7 +84,7 @@ export const customersService = {
 
   update: async (id, payload) => {
     try {
-      const { data } = await api.patch(`/customers/${id}`, payload);
+      const { data } = await api.patch(`/expenses/${id}`, payload);
       return data;
     } catch (error) {
       return handleError(error);
@@ -110,7 +93,7 @@ export const customersService = {
 
   delete: async (id) => {
     try {
-      const { data } = await api.delete(`/customers/${id}`);
+      const { data } = await api.delete(`/expenses/${id}`);
       return data;
     } catch (error) {
       return handleError(error);
