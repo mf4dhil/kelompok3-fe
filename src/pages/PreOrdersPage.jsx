@@ -414,6 +414,7 @@ export default function PreOrdersPage() {
             <table className='w-full text-left text-sm'>
               <thead className='bg-quaternary border-b border-secondary/20 text-xs font-semibold text-primary uppercase'>
                 <tr>
+                  <th className='px-5 py-3'>No.</th>
                   <th className='px-5 py-3'>No. Order</th>
                   <th className='px-5 py-3'>Customer</th>
                   <th className='px-5 py-3'>Tanggal Pickup</th>
@@ -424,8 +425,9 @@ export default function PreOrdersPage() {
                 </tr>
               </thead>
               <tbody className='divide-y divide-secondary/10'>
-                {orders.map((order) => (
+                {orders.map((order, index) => (
                   <tr key={order.id} className='hover:bg-quaternary/50 transition'>
+                    <td className='px-5 py-4 font-mono text-xs font-bold text-primary'>{index+1}</td>
                     <td className='px-5 py-4 font-mono text-xs font-bold text-primary'>{order.order_number}</td>
                     <td className='px-5 py-4 font-medium text-primary'>{order.Customer?.name || order.customer?.name || '-'}</td>
                     <td className='px-5 py-4 text-primary/80'>{order.pickup_date}</td>

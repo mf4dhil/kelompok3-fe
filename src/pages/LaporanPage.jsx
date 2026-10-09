@@ -190,7 +190,7 @@ export default function LaporanPage() {
       <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
         <div>
           <h1 className='text-2xl font-bold text-primary flex items-center gap-2'>
-            <FileText className='w-6 h-6 text-[#C86D51]' />
+            <FileText className='w-6 h-6 text-secondary' />
             Laporan & Rekap Transaksi
           </h1>
           <p className='text-sm text-primary/60 mt-1'>Pantau arus kas pembayaran, status pelunasan, dan riwayat pre-order pelanggan.</p>
@@ -206,19 +206,19 @@ export default function LaporanPage() {
       <div className='flex gap-2 border-b border-secondary/20 pb-2'>
         <button
           onClick={() => setActiveTab('payments')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${activeTab === 'payments' ? 'bg-[#C86D51] text-white shadow-sm' : 'bg-white text-primary/70 hover:bg-secondary/10'}`}>
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${activeTab === 'payments' ? 'bg-secondary text-white shadow-sm' : 'bg-white text-primary/70 hover:bg-secondary/10'}`}>
           <CreditCard className='w-4 h-4' />
           Laporan Pembayaran Masuk
         </button>
         <button
           onClick={() => setActiveTab('orders')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${activeTab === 'orders' ? 'bg-[#C86D51] text-white shadow-sm' : 'bg-white text-primary/70 hover:bg-secondary/10'}`}>
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${activeTab === 'orders' ? 'bg-secondary text-white shadow-sm' : 'bg-white text-primary/70 hover:bg-secondary/10'}`}>
           <TrendingUp className='w-4 h-4' />
           Laporan Pre-Order & Omzet
         </button>
         <button
           onClick={() => setActiveTab('expenses')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${activeTab === 'expenses' ? 'bg-[#C86D51] text-white shadow-sm' : 'bg-white text-primary/70 hover:bg-secondary/10'}`}>
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${activeTab === 'expenses' ? 'bg-secondary text-white shadow-sm' : 'bg-white text-primary/70 hover:bg-secondary/10'}`}>
           <TrendingUp className='w-4 h-4' />
           Laporan Pengeluaran & Profit
         </button>
@@ -241,7 +241,7 @@ export default function LaporanPage() {
           <div className='bg-white p-5 rounded-2xl border border-secondary/20 shadow-sm'>
             <div className='flex items-center justify-between text-primary/60 mb-2'>
               <span className='text-xs font-medium uppercase tracking-wider'>Total Nominal</span>
-              <span className='p-2 bg-[#C86D51]/10 text-[#C86D51] rounded-lg'>
+              <span className='p-2 bg-secondary/10 text-secondary rounded-lg'>
                 <DollarSign className='w-4 h-4' />
               </span>
             </div>
@@ -285,9 +285,9 @@ export default function LaporanPage() {
           </div>
 
           <div className='bg-white p-5 rounded-2xl border border-secondary/20 shadow-sm'>
-            <div className='flex items-center justify-between text-[#C86D51] mb-2'>
+            <div className='flex items-center justify-between text-secondary mb-2'>
               <span className='text-xs font-medium uppercase tracking-wider'>Potensi Omzet</span>
-              <span className='p-2 bg-[#C86D51]/10 rounded-lg'>
+              <span className='p-2 bg-secondary/10 rounded-lg'>
                 <TrendingUp className='w-4 h-4' />
               </span>
             </div>
@@ -368,7 +368,7 @@ export default function LaporanPage() {
       {/* Filter Control Section */}
       <div className='bg-white rounded-2xl border border-secondary/20 p-4 shadow-sm space-y-4'>
         <div className='flex items-center gap-2 text-primary font-semibold text-sm'>
-          <Filter className='w-4 h-4 text-[#C86D51]' />
+          <Filter className='w-4 h-4 text-secondary' />
           Filter Data Laporan
         </div>
 
@@ -380,7 +380,7 @@ export default function LaporanPage() {
                 <select
                   value={paymentStatusFilter}
                   onChange={(e) => setPaymentStatusFilter(e.target.value)}
-                  className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]'>
+                  className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-secondary'>
                   <option value=''>Semua Status</option>
                   <option value='verified'>Verified (Disetujui)</option>
                   <option value='pending'>Pending (Menunggu)</option>
@@ -393,7 +393,7 @@ export default function LaporanPage() {
                 <select
                   value={paymentMethodFilter}
                   onChange={(e) => setPaymentMethodFilter(e.target.value)}
-                  className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]'>
+                  className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-secondary'>
                   <option value=''>Semua Metode</option>
                   <option value='cash'>Tunai / Cash</option>
                   <option value='transfer'>Transfer Bank</option>
@@ -404,7 +404,7 @@ export default function LaporanPage() {
             <>
               <div>
                 <label className='block text-xs font-medium text-primary/70 mb-1'>Status Pesanan</label>
-                <select value={orderStatusFilter} onChange={(e) => setOrderStatusFilter(e.target.value)} className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]'>
+                <select value={orderStatusFilter} onChange={(e) => setOrderStatusFilter(e.target.value)} className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-secondary'>
                   <option value=''>Semua Status Pesanan</option>
                   <option value='pending'>Pending</option>
                   <option value='processing'>Processing</option>
@@ -419,7 +419,7 @@ export default function LaporanPage() {
                 <select
                   value={orderPaymentStatusFilter}
                   onChange={(e) => setOrderPaymentStatusFilter(e.target.value)}
-                  className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]'>
+                  className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-secondary'>
                   <option value=''>Semua Pelunasan</option>
                   <option value='unpaid'>Unpaid (Belum Bayar)</option>
                   <option value='partial'>Partial (DP)</option>
@@ -431,12 +431,12 @@ export default function LaporanPage() {
 
           <div>
             <label className='block text-xs font-medium text-primary/70 mb-1'>Dari Tanggal</label>
-            <input type='date' value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]' />
+            <input type='date' value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-secondary' />
           </div>
 
           <div>
             <label className='block text-xs font-medium text-primary/70 mb-1'>Sampai Tanggal</label>
-            <input type='date' value={dateTo} onChange={(e) => setDateTo(e.target.value)} className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]' />
+            <input type='date' value={dateTo} onChange={(e) => setDateTo(e.target.value)} className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-secondary' />
           </div>
         </div>
       </div>
@@ -448,7 +448,7 @@ export default function LaporanPage() {
       <div className='bg-white rounded-2xl border border-secondary/20 overflow-hidden shadow-sm'>
         {loading ? (
           <div className='p-12 text-center text-primary/50 flex flex-col items-center justify-center gap-2'>
-            <RefreshCw className='w-6 h-6 animate-spin text-[#C86D51]' />
+            <RefreshCw className='w-6 h-6 animate-spin text-secondary' />
             <p className='text-sm'>Memuat data laporan...</p>
           </div>
         ) : activeTab === 'expenses' ? (
@@ -463,6 +463,7 @@ export default function LaporanPage() {
               <table className='w-full text-left text-xs'>
                 <thead className='bg-quaternary border-b border-secondary/15 text-primary/70 text-xs font-bold uppercase tracking-wider'>
                   <tr>
+                    <th className='px-5 py-4'>No.</th>
                     <th className='px-5 py-4'>ID & Tanggal</th>
                     <th className='px-5 py-4'>Kategori</th>
                     <th className='px-5 py-4'>Deskripsi</th>
@@ -472,12 +473,13 @@ export default function LaporanPage() {
                   </tr>
                 </thead>
                 <tbody className='divide-y divide-secondary/10 text-primary'>
-                  {filteredExpenses.map((e) => {
+                  {filteredExpenses.map((e, index) => {
                     const category = e.category?.name || '-';
                     const proofUrl = e.receipt ? (e.receipt.startsWith('http') ? e.receipt : `http://localhost:3000${e.receipt}`) : null;
 
                     return (
                       <tr key={e.id} className='hover:bg-secondary/5 transition'>
+                        <td className='px-5 py-4 text-xs text-primary/60'>{index + 1}</td>
                         <td className='px-5 py-4'>
                           <span className='font-mono font-bold text-xs block text-primary/60'>EXP-{String(e.id).padStart(4, '0')}</span>
                           <span className='text-xs text-primary/50 flex items-center gap-1 mt-0.5'>
@@ -499,7 +501,7 @@ export default function LaporanPage() {
                           {proofUrl ? (
                             <button
                               onClick={() => setPreviewImage(proofUrl)}
-                              className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary/10 hover:bg-[#C86D51] hover:text-white text-primary text-xs font-medium transition'
+                              className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary/10 hover:bg-secondary hover:text-white text-primary text-xs font-medium transition'
                               title='Lihat Bukti'>
                               <ImageIcon className='w-3.5 h-3.5' />
                               Lihat Bukti
@@ -527,6 +529,7 @@ export default function LaporanPage() {
               <table className='w-full text-left text-sm'>
                 <thead className='bg-quaternary border-b border-secondary/15 text-primary/70 text-xs font-bold uppercase tracking-wider'>
                   <tr>
+                    <th className='px-5 py-4'>No.</th>
                     <th className='px-5 py-4'>ID & Tanggal</th>
                     <th className='px-5 py-4'>No. Order</th>
                     <th className='px-5 py-4'>Metode / Rekening</th>
@@ -537,11 +540,12 @@ export default function LaporanPage() {
                   </tr>
                 </thead>
                 <tbody className='divide-y divide-secondary/10 text-primary'>
-                  {filteredPayments.map((p) => {
+                  {filteredPayments.map((p, index) => {
                     const proofUrl = p.payment_proof ? (p.payment_proof.startsWith('http') ? p.payment_proof : `http://localhost:3000${p.payment_proof}`) : null;
 
                     return (
                       <tr key={p.id} className='hover:bg-secondary/5 transition'>
+                        <td className='px-5 py-4 text-xs text-primary/60'>{index + 1}</td>
                         <td className='px-5 py-4'>
                           <span className='font-mono font-bold text-xs block text-primary/60'>#PAY-{String(p.id).padStart(4, '0')}</span>
                           <span className='text-xs text-primary/50 flex items-center gap-1 mt-0.5'>
@@ -573,7 +577,7 @@ export default function LaporanPage() {
                           {proofUrl ? (
                             <button
                               onClick={() => setPreviewImage(proofUrl)}
-                              className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary/10 hover:bg-[#C86D51] hover:text-white text-primary text-xs font-medium transition'
+                              className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary/10 hover:bg-secondary hover:text-white text-primary text-xs font-medium transition'
                               title='Lihat Bukti Transfer'>
                               <ImageIcon className='w-3.5 h-3.5' />
                               Lihat Bukti
@@ -600,6 +604,7 @@ export default function LaporanPage() {
             <table className='w-full text-left text-sm'>
               <thead className='bg-quaternary border-b border-secondary/15 text-primary/70 text-xs font-bold uppercase tracking-wider'>
                 <tr>
+                  <th className='px-5 py-4'>No.</th>
                   <th className='px-5 py-4'>No. Pesanan</th>
                   <th className='px-5 py-4'>Pelanggan</th>
                   <th className='px-5 py-4'>Tgl Pesan & Ambil</th>
@@ -609,8 +614,9 @@ export default function LaporanPage() {
                 </tr>
               </thead>
               <tbody className='divide-y divide-secondary/10 text-primary'>
-                {filteredOrders.map((o) => (
+                {filteredOrders.map((o, index) => (
                   <tr key={o.id} className='hover:bg-secondary/5 transition'>
+                    <td className='px-5 py-4 text-xs text-primary/60'>{index + 1}</td>
                     <td className='px-5 py-4 font-semibold text-primary'>
                       {o.order_number}
                       {o.order_items?.length > 0 && <span className='block text-xs text-primary/50 font-normal mt-0.5'>{o.order_items.length} jenis kue</span>}
@@ -657,7 +663,7 @@ export default function LaporanPage() {
           <div className='bg-white p-4 rounded-2xl max-w-lg w-full shadow-2xl space-y-3 relative' onClick={(e) => e.stopPropagation()}>
             <div className='flex items-center justify-between border-b border-secondary/20 pb-2'>
               <h3 className='font-bold text-primary flex items-center gap-2'>
-                <ImageIcon className='w-4 h-4 text-[#C86D51]' />
+                <ImageIcon className='w-4 h-4 text-secondary' />
                 Bukti Pembayaran
               </h3>
               <button onClick={() => setPreviewImage(null)} className='text-primary/50 hover:text-primary font-bold text-lg'>
@@ -678,7 +684,7 @@ export default function LaporanPage() {
             </div>
 
             <div className='flex justify-end pt-2'>
-              <button onClick={() => setPreviewImage(null)} className='px-4 py-2 bg-[#C86D51] text-white rounded-xl text-sm font-semibold hover:bg-[#C86D51]/90 transition'>
+              <button onClick={() => setPreviewImage(null)} className='px-4 py-2 bg-secondary text-white rounded-xl text-sm font-semibold hover:bg-secondary/90 transition'>
                 Tutup
               </button>
             </div>
