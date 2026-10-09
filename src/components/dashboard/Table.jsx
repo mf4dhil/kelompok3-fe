@@ -14,14 +14,14 @@ function OrderTable({ orders }) {
     new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount || 0);
 
   return (
-    <div className="bg-white rounded-xl border border-[#2B1B17]/10 shadow-sm">
+    <div className="bg-white rounded-xl border border-primary/10 shadow-sm">
       {/* Header */}
-      <div className="p-5 border-b border-[#2B1B17]/10">
-        <h2 className="text-lg font-bold text-[#2B1B17]">
+      <div className="p-5 border-b border-primary/10">
+        <h2 className="text-lg font-bold text-primary">
           Pre-Order Terbaru
         </h2>
 
-        <p className="text-sm text-[#2B1B17]/60">
+        <p className="text-sm text-primary/60">
           Daftar pesanan kue terbaru
         </p>
       </div>
@@ -29,26 +29,14 @@ function OrderTable({ orders }) {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-[#FAF5EE]">
+          <thead className="bg-quaternary">
             <tr>
-              <th className="text-left px-5 py-3 text-sm font-semibold text-[#2B1B17]">
-                No.
-              </th>
-              <th className="text-left px-5 py-3 text-sm font-semibold text-[#2B1B17]">
-                No. Order
-              </th>
-              <th className="text-left px-5 py-3 text-sm font-semibold text-[#2B1B17]">
-                Pelanggan
-              </th>
-              <th className="text-left px-5 py-3 text-sm font-semibold text-[#2B1B17]">
-                Tanggal Pickup
-              </th>
-              <th className="text-left px-5 py-3 text-sm font-semibold text-[#2B1B17]">
-                Total
-              </th>
-              <th className="text-left px-5 py-3 text-sm font-semibold text-[#2B1B17]">
-                Status
-              </th>
+              <th className="text-left px-5 py-3 text-sm font-semibold text-primary">No</th>
+              <th className="text-left px-5 py-3 text-sm font-semibold text-primary">No. Order</th>
+              <th className="text-left px-5 py-3 text-sm font-semibold text-primary">Pelanggan</th>
+              <th className="text-left px-5 py-3 text-sm font-semibold text-primary">Tanggal Pickup</th>
+              <th className="text-left px-5 py-3 text-sm font-semibold text-primary">Total</th>
+              <th className="text-left px-5 py-3 text-sm font-semibold text-primary">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -59,21 +47,21 @@ function OrderTable({ orders }) {
               return (
                 <tr
                   key={order.id}
-                  className="border-t border-[#2B1B17]/10 hover:bg-[#FAF5EE]/70 transition"
+                  className="border-t border-primary/10 hover:bg-quaternary/70 transition"
                 >
-                  <td className="px-5 py-4 text-sm font-mono font-bold text-[#2B1B17]">
-                    {`${index + 1}.`}
+                  <td className="px-5 py-4 text-sm font-mono font-bold text-primary">
+                    {index + 1}
                   </td>
-                  <td className="px-5 py-4 text-sm font-mono font-bold text-[#2B1B17]">
+                  <td className="px-5 py-4 text-sm font-mono font-bold text-primary">
                     {order.order_number || `#${index + 1}`}
                   </td>
-                  <td className="px-5 py-4 text-sm font-medium text-[#2B1B17]">
+                  <td className="px-5 py-4 text-sm font-medium text-primary">
                     {customerName}
                   </td>
-                  <td className="px-5 py-4 text-sm text-[#2B1B17]/70">
+                  <td className="px-5 py-4 text-sm text-primary/70">
                     {order.pickup_date || '-'}
                   </td>
-                  <td className="px-5 py-4 text-sm font-semibold text-[#2B1B17]">
+                  <td className="px-5 py-4 text-sm font-semibold text-primary">
                     {formatCurrency(order.total_amount)}
                   </td>
                   <td className="px-5 py-4">
