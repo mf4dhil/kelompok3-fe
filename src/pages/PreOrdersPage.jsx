@@ -68,6 +68,7 @@ export default function PreOrdersPage() {
       const res = await ordersService.getAll(params);
       // Handle pagination or array response
       const list = Array.isArray(res) ? res : res.data || res.orders || [];
+      console.log(list)
       setOrders(list);
     } catch (err) {
       setError(err.message);
@@ -230,6 +231,7 @@ export default function PreOrdersPage() {
     setIsDetailLoading(true);
     try {
       const detail = await ordersService.getById(order.id);
+      console.log(detail)
       setSelectedOrder(detail);
     } catch (err) {
       setError(err.message || 'Gagal memuat detail order');
@@ -414,8 +416,10 @@ export default function PreOrdersPage() {
             <table className='w-full text-left text-sm'>
               <thead className='bg-quaternary border-b border-secondary/20 text-xs font-semibold text-primary uppercase'>
                 <tr>
+                  <th className='px-5 py-3'>No</th>
                   <th className='px-5 py-3'>No. Order</th>
                   <th className='px-5 py-3'>Customer</th>
+                  <th className='px-5 py-3'>Alamat</th>
                   <th className='px-5 py-3'>Tanggal Pickup</th>
                   <th className='px-5 py-3'>Total</th>
                   <th className='px-5 py-3'>Status</th>
@@ -424,10 +428,14 @@ export default function PreOrdersPage() {
                 </tr>
               </thead>
               <tbody className='divide-y divide-secondary/10'>
-                {orders.map((order) => (
-                  <tr key={order.id} className='hover:bg-quaternary/50 transition'>
+                {orders.map((order, index) => (
+                  <tr key={order.id} className='hover:bg-quaternary/50 transition '>
+                    <td className='px-5 py-4 font-mono text-xs font-bold text-primary'>{index+1}</td>
                     <td className='px-5 py-4 font-mono text-xs font-bold text-primary'>{order.order_number}</td>
                     <td className='px-5 py-4 font-medium text-primary'>{order.Customer?.name || order.customer?.name || '-'}</td>
+                    <td className='px-5 py-4 font-medium text-primary text-wrap max-w-6 overflow-hidden '>
+                      {order.Customer?.address || order.customer?.address}
+                     </td>
                     <td className='px-5 py-4 text-primary/80'>{order.pickup_date}</td>
                     <td className='px-5 py-4 font-semibold text-primary'>{formatCurrency(order.total_amount)}</td>
                     <td className='px-5 py-4'>
@@ -486,7 +494,8 @@ export default function PreOrdersPage() {
             <h2 className='text-xl font-bold mb-4'>Detail Order #{selectedOrder.order_number}</h2>
             {isDetailLoading && <p className='mb-3 text-xs text-primary/60'>Memuat data pembayaran...</p>}
             <div className='space-y-3 text-sm'>
-              <div className='grid grid-cols-2 gap-2 bg-quaternary p-3 rounded-lg'>
+              <div className='bg-quaternary p-3 rounded-lg'>
+              <div className='grid grid-cols-2 gap-2 '>
                 <div>
                   <p className='text-xs text-primary/60'>Customer</p>
                   <p className='font-semibold'>{selectedOrder.Customer?.name || selectedOrder.customer?.name}</p>
@@ -502,6 +511,12 @@ export default function PreOrdersPage() {
                 <div>
                   <p className='text-xs text-primary/60'>Total Amount</p>
                   <p className='font-semibold text-tertiary'>{formatCurrency(selectedOrder.total_amount)}</p>
+                </div>
+
+              </div>
+                <div className='py-2'>
+                  <p className='text-xs text-primary/60 '>Alamat</p>
+                  <p className='font-semibold text-tertiary wrap-break-word '>{selectedOrder.Customer?.address || selectedOrder.customer?.address || '-'}</p>
                 </div>
               </div>
 
@@ -519,7 +534,7 @@ export default function PreOrdersPage() {
                     <tbody className='divide-y divide-secondary/10'>
                       {(selectedOrder.OrderItems || selectedOrder.order_items || []).map((item, idx) => (
                         <tr key={idx}>
-                          <td className='px-3 py-2'>{item.ProductVariant?.Product?.name || item.product_variant?.product?.name || 'Kue Varian'}</td>
+                          <td className='px-3 py-2'>{item.ProductVariant?.Product?.name || item.productvariant?.product?.name || 'Kue Varian'}</td>
                           <td className='px-3 py-2 text-center'>{item.quantity}</td>
                           <td className='px-3 py-2 text-right'>{formatCurrency(item.quantity * item.price)}</td>
                         </tr>
@@ -654,6 +669,8 @@ export default function PreOrdersPage() {
                     placeholder='Alamat lengkap customer...'
                     className='w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none resize-y'
                   />
+                  
+                  {newOrder.customer_address.length >= 100 && <div className='p-4 rounded-lg bg-red-100 border border-red-200 text-red-700 text-sm'>Alamat tidak boleh lbih dari 100 karakter</div>}
                 </div>
               </div>
 

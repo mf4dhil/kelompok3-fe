@@ -46,21 +46,21 @@ function Dashboard() {
           value={totalPesanan}
           description='Total semua pesanan'
           icon='📦'
-          iconColor='bg-[#C86D51]/15'
+          iconColor='bg-secondary/15'
         />
         <StatCard
           title='Pesanan Baru'
           value={pesananBaru}
           description='Menunggu diproses'
           icon='📝'
-          iconColor='bg-[#E8A857]/20'
+          iconColor='bg-tertiary/20'
         />
         <StatCard
           title='Diproses'
           value={pesananDiproses}
           description='Sedang dibuat'
           icon='🍰'
-          iconColor='bg-[#C86D51]/15'
+          iconColor='bg-secondary/15'
         />
         <StatCard
           title='Selesai'
