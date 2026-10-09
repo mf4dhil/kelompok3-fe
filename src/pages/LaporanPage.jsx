@@ -1,27 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import {
-  FileText,
-  DollarSign,
-  CheckCircle2,
-  Clock,
-  Filter,
-  Eye,
-  Calendar,
-  CreditCard,
-  Building2,
-  Image as ImageIcon,
-  ChevronDown,
-  ChevronUp,
-  RefreshCw,
-  TrendingUp,
-  AlertCircle
-} from 'lucide-react';
+import { FileText, DollarSign, CheckCircle2, Clock, Filter, Eye, Calendar, CreditCard, Building2, Image as ImageIcon, ChevronDown, ChevronUp, RefreshCw, TrendingUp, AlertCircle } from 'lucide-react';
 
 export default function LaporanPage() {
-  const [activeTab, setActiveTab] = useState('payments'); // 'payments' | 'orders'
+  const [activeTab, setActiveTab] = useState('payments'); // 'payments' | 'orders' | 'expenses'
   const [payments, setPayments] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -42,15 +27,7 @@ export default function LaporanPage() {
 
   useEffect(() => {
     fetchData();
-  }, [
-    activeTab,
-    paymentStatusFilter,
-    paymentMethodFilter,
-    orderStatusFilter,
-    orderPaymentStatusFilter,
-    dateFrom,
-    dateTo,
-  ]);
+  }, [activeTab, paymentStatusFilter, paymentMethodFilter, orderStatusFilter, orderPaymentStatusFilter, dateFrom, dateTo]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -62,13 +39,22 @@ export default function LaporanPage() {
         const res = await api.get('/payments', { params });
         const data = res.data?.data || res.data?.rows || (Array.isArray(res.data) ? res.data : []);
         setPayments(data);
-      } else {
+      } else if (activeTab === 'orders') {
         const params = { limit: 100 };
         if (orderStatusFilter) params.status = orderStatusFilter;
         if (orderPaymentStatusFilter) params.payment_status = orderPaymentStatusFilter;
         const res = await api.get('/orders', { params });
         const data = res.data?.data || res.data?.rows || (Array.isArray(res.data) ? res.data : []);
         setOrders(data);
+      } else {
+        const params = { limit: 100 };
+        if (dateFrom) params.start_date = dateFrom;
+        if (dateTo) params.end_date = dateTo;
+        const [expenseRes, paymentRes] = await Promise.all([api.get('/expenses', { params }), api.get('/payments', { params: { limit: 100, status: 'verified' } })]);
+        const expenseData = expenseRes.data?.data || expenseRes.data?.rows || (Array.isArray(expenseRes.data) ? expenseRes.data : []);
+        const paymentData = paymentRes.data?.data || paymentRes.data?.rows || (Array.isArray(paymentRes.data) ? paymentRes.data : []);
+        setExpenses(expenseData);
+        setPayments(paymentData);
       }
     } catch (err) {
       console.error(err);
@@ -126,16 +112,26 @@ export default function LaporanPage() {
     return true;
   });
 
+  const filteredExpenses = expenses.filter((e) => {
+    if (dateFrom) {
+      const eDate = new Date(e.expense_date);
+      if (eDate < new Date(dateFrom)) return false;
+    }
+    if (dateTo) {
+      const eDate = new Date(e.expense_date);
+      const end = new Date(dateTo);
+      end.setHours(23, 59, 59, 999);
+      if (eDate > end) return false;
+    }
+    return true;
+  });
+
   // Calculation summaries
   const paymentStats = {
     totalCount: filteredPayments.length,
     totalNominal: filteredPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
-    verifiedNominal: filteredPayments
-      .filter((p) => p.status === 'verified')
-      .reduce((sum, p) => sum + (p.amount || 0), 0),
-    pendingNominal: filteredPayments
-      .filter((p) => p.status === 'pending')
-      .reduce((sum, p) => sum + (p.amount || 0), 0),
+    verifiedNominal: filteredPayments.filter((p) => p.status === 'verified').reduce((sum, p) => sum + (p.amount || 0), 0),
+    pendingNominal: filteredPayments.filter((p) => p.status === 'pending').reduce((sum, p) => sum + (p.amount || 0), 0),
   };
 
   const orderStats = {
@@ -144,6 +140,23 @@ export default function LaporanPage() {
     paidOrders: filteredOrders.filter((o) => o.payment_status === 'paid').length,
     pendingOrders: filteredOrders.filter((o) => o.payment_status !== 'paid').length,
   };
+
+  const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+  const verifiedIncome = payments
+    .filter((payment) => {
+      if (payment.status !== 'verified') return false;
+      const paymentDate = new Date(payment.paid_at || payment.created_at || payment.createdAt);
+      if (dateFrom && paymentDate < new Date(dateFrom)) return false;
+      if (dateTo) {
+        const end = new Date(dateTo);
+        end.setHours(23, 59, 59, 999);
+        if (paymentDate > end) return false;
+      }
+      return true;
+    })
+    .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+  const netProfit = verifiedIncome - totalExpenses;
+  const profitMargin = verifiedIncome > 0 ? (netProfit / verifiedIncome) * 100 : 0;
 
   const getPaymentStatusBadge = (status) => {
     switch (status) {
@@ -180,15 +193,10 @@ export default function LaporanPage() {
             <FileText className='w-6 h-6 text-[#C86D51]' />
             Laporan & Rekap Transaksi
           </h1>
-          <p className='text-sm text-primary/60 mt-1'>
-            Pantau arus kas pembayaran, status pelunasan, dan riwayat pre-order pelanggan.
-          </p>
+          <p className='text-sm text-primary/60 mt-1'>Pantau arus kas pembayaran, status pelunasan, dan riwayat pre-order pelanggan.</p>
         </div>
 
-        <button
-          onClick={fetchData}
-          className='flex items-center gap-2 px-4 py-2 bg-secondary/15 hover:bg-secondary/25 text-primary text-sm font-semibold rounded-xl transition self-start sm:self-auto'
-        >
+        <button onClick={fetchData} className='flex items-center gap-2 px-4 py-2 bg-secondary/15 hover:bg-secondary/25 text-primary text-sm font-semibold rounded-xl transition self-start sm:self-auto'>
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh Data
         </button>
@@ -198,25 +206,21 @@ export default function LaporanPage() {
       <div className='flex gap-2 border-b border-secondary/20 pb-2'>
         <button
           onClick={() => setActiveTab('payments')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${
-            activeTab === 'payments'
-              ? 'bg-[#C86D51] text-white shadow-sm'
-              : 'bg-white text-primary/70 hover:bg-secondary/10'
-          }`}
-        >
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${activeTab === 'payments' ? 'bg-[#C86D51] text-white shadow-sm' : 'bg-white text-primary/70 hover:bg-secondary/10'}`}>
           <CreditCard className='w-4 h-4' />
           Laporan Pembayaran Masuk
         </button>
         <button
           onClick={() => setActiveTab('orders')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${
-            activeTab === 'orders'
-              ? 'bg-[#C86D51] text-white shadow-sm'
-              : 'bg-white text-primary/70 hover:bg-secondary/10'
-          }`}
-        >
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${activeTab === 'orders' ? 'bg-[#C86D51] text-white shadow-sm' : 'bg-white text-primary/70 hover:bg-secondary/10'}`}>
           <TrendingUp className='w-4 h-4' />
           Laporan Pre-Order & Omzet
+        </button>
+        <button
+          onClick={() => setActiveTab('expenses')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${activeTab === 'expenses' ? 'bg-[#C86D51] text-white shadow-sm' : 'bg-white text-primary/70 hover:bg-secondary/10'}`}>
+          <TrendingUp className='w-4 h-4' />
+          Laporan Pengeluaran & Profit
         </button>
       </div>
 
@@ -267,7 +271,7 @@ export default function LaporanPage() {
             <p className='text-xs text-amber-600/70 mt-1'>Menunggu konfirmasi admin</p>
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'orders' ? (
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
           <div className='bg-white p-5 rounded-2xl border border-secondary/20 shadow-sm'>
             <div className='flex items-center justify-between text-primary/60 mb-2'>
@@ -313,6 +317,52 @@ export default function LaporanPage() {
             <p className='text-xs text-amber-600/70 mt-1'>Status Unpaid atau Partial</p>
           </div>
         </div>
+      ) : (
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
+          {/* Profit Margin Summary */}
+          <div className='bg-white p-5 rounded-2xl border border-secondary/20 shadow-sm'>
+            <div className='flex items-center justify-between text-green-700 mb-2'>
+              <span className='text-xs font-medium uppercase tracking-wider'>Pendapatan Terverifikasi</span>
+              <span className='p-2 bg-green-100 rounded-lg'>
+                <DollarSign className='w-4 h-4' />
+              </span>
+            </div>
+            <p className='text-2xl font-bold text-green-700'>{formatIdr(verifiedIncome)}</p>
+            <p className='text-xs text-green-600/70 mt-1'>Pembayaran yang sudah diverifikasi</p>
+          </div>
+          <div className='bg-white p-5 rounded-2xl border border-secondary/20 shadow-sm'>
+            <div className='flex items-center justify-between text-primary/60 mb-2'>
+              <span className='text-xs font-medium uppercase tracking-wider'>Total Pengeluaran</span>
+              <span className='p-2 bg-red-100 text-red-700 rounded-lg'>
+                <AlertCircle className='w-4 h-4' />
+              </span>
+            </div>
+            <p className='text-2xl font-bold text-primary'>{formatIdr(totalExpenses)}</p>
+            <p className='text-xs text-primary/50 mt-1'>Uang keluar</p>
+          </div>
+
+          <div className='bg-white p-5 rounded-2xl border border-secondary/20 shadow-sm'>
+            <div className='flex items-center justify-between text-primary/60 mb-2'>
+              <span className='text-xs font-medium uppercase tracking-wider'>Pendapatan Bersih</span>
+              <span className='p-2 bg-blue-100 text-blue-700 rounded-lg'>
+                <TrendingUp className='w-4 h-4' />
+              </span>
+            </div>
+            <p className='text-2xl font-bold text-primary'>{formatIdr(netProfit)}</p>
+            <p className='text-xs text-primary/50 mt-1'>Pendapatan - Pengeluaran</p>
+          </div>
+
+          <div className='bg-white p-5 rounded-2xl border border-secondary/20 shadow-sm'>
+            <div className='flex items-center justify-between text-primary/60 mb-2'>
+              <span className='text-xs font-medium uppercase tracking-wider'>Margin Laba</span>
+              <span className='p-2 bg-green-100 text-green-700 rounded-lg'>
+                <TrendingUp className='w-4 h-4' />
+              </span>
+            </div>
+            <p className='text-2xl font-bold text-primary'>{profitMargin.toFixed(1)}%</p>
+            <p className='text-xs text-primary/50 mt-1'>Keuntungan terhadap pendapatan</p>
+          </div>
+        </div>
       )}
 
       {/* Filter Control Section */}
@@ -330,8 +380,7 @@ export default function LaporanPage() {
                 <select
                   value={paymentStatusFilter}
                   onChange={(e) => setPaymentStatusFilter(e.target.value)}
-                  className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]'
-                >
+                  className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]'>
                   <option value=''>Semua Status</option>
                   <option value='verified'>Verified (Disetujui)</option>
                   <option value='pending'>Pending (Menunggu)</option>
@@ -344,23 +393,18 @@ export default function LaporanPage() {
                 <select
                   value={paymentMethodFilter}
                   onChange={(e) => setPaymentMethodFilter(e.target.value)}
-                  className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]'
-                >
+                  className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]'>
                   <option value=''>Semua Metode</option>
                   <option value='cash'>Tunai / Cash</option>
                   <option value='transfer'>Transfer Bank</option>
                 </select>
               </div>
             </>
-          ) : (
+          ) : activeTab === 'orders' ? (
             <>
               <div>
                 <label className='block text-xs font-medium text-primary/70 mb-1'>Status Pesanan</label>
-                <select
-                  value={orderStatusFilter}
-                  onChange={(e) => setOrderStatusFilter(e.target.value)}
-                  className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]'
-                >
+                <select value={orderStatusFilter} onChange={(e) => setOrderStatusFilter(e.target.value)} className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]'>
                   <option value=''>Semua Status Pesanan</option>
                   <option value='pending'>Pending</option>
                   <option value='processing'>Processing</option>
@@ -375,8 +419,7 @@ export default function LaporanPage() {
                 <select
                   value={orderPaymentStatusFilter}
                   onChange={(e) => setOrderPaymentStatusFilter(e.target.value)}
-                  className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]'
-                >
+                  className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]'>
                   <option value=''>Semua Pelunasan</option>
                   <option value='unpaid'>Unpaid (Belum Bayar)</option>
                   <option value='partial'>Partial (DP)</option>
@@ -384,36 +427,22 @@ export default function LaporanPage() {
                 </select>
               </div>
             </>
-          )}
+          ) : null}
 
           <div>
             <label className='block text-xs font-medium text-primary/70 mb-1'>Dari Tanggal</label>
-            <input
-              type='date'
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]'
-            />
+            <input type='date' value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]' />
           </div>
 
           <div>
             <label className='block text-xs font-medium text-primary/70 mb-1'>Sampai Tanggal</label>
-            <input
-              type='date'
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]'
-            />
+            <input type='date' value={dateTo} onChange={(e) => setDateTo(e.target.value)} className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#C86D51]' />
           </div>
         </div>
       </div>
 
       {/* Error Message */}
-      {error && (
-        <div className='p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm'>
-          {error}
-        </div>
-      )}
+      {error && <div className='p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm'>{error}</div>}
 
       {/* Table Container */}
       <div className='bg-white rounded-2xl border border-secondary/20 overflow-hidden shadow-sm'>
@@ -422,6 +451,70 @@ export default function LaporanPage() {
             <RefreshCw className='w-6 h-6 animate-spin text-[#C86D51]' />
             <p className='text-sm'>Memuat data laporan...</p>
           </div>
+        ) : activeTab === 'expenses' ? (
+          filteredExpenses.length === 0 ? (
+            <div className='p-12 text-center text-primary/50'>
+              <TrendingUp className='w-10 h-10 mx-auto text-secondary/40 mb-2' />
+              <p className='font-medium'>Belum ada pengeluaran sesuai filter</p>
+              <p className='text-xs mt-1'>Coba sesuaikan pilihan tanggal atau filter di atas</p>
+            </div>
+          ) : (
+            <div className='overflow-x-auto'>
+              <table className='w-full text-left text-xs'>
+                <thead className='bg-quaternary border-b border-secondary/15 text-primary/70 text-xs font-bold uppercase tracking-wider'>
+                  <tr>
+                    <th className='px-5 py-4'>ID & Tanggal</th>
+                    <th className='px-5 py-4'>Kategori</th>
+                    <th className='px-5 py-4'>Deskripsi</th>
+                    <th className='px-5 py-4'>Nominal</th>
+                    <th className='px-5 py-4'>Metode</th>
+                    <th className='px-5 py-4 text-center'>Bukti</th>
+                  </tr>
+                </thead>
+                <tbody className='divide-y divide-secondary/10 text-primary'>
+                  {filteredExpenses.map((e) => {
+                    const category = e.category?.name || '-';
+                    const proofUrl = e.receipt ? (e.receipt.startsWith('http') ? e.receipt : `http://localhost:3000${e.receipt}`) : null;
+
+                    return (
+                      <tr key={e.id} className='hover:bg-secondary/5 transition'>
+                        <td className='px-5 py-4'>
+                          <span className='font-mono font-bold text-xs block text-primary/60'>EXP-{String(e.id).padStart(4, '0')}</span>
+                          <span className='text-xs text-primary/50 flex items-center gap-1 mt-0.5'>
+                            <Calendar className='w-3 h-3' />
+                            {formatDate(e.expense_date)}
+                          </span>
+                        </td>
+                        <td className='px-5 py-4'>
+                          <span className='capitalize font-medium block text-primary'>{category}</span>
+                        </td>
+                        <td className='px-5 py-4'>
+                          <span className='text-xs text-primary/60'>{e.description || '-'}</span>
+                        </td>
+                        <td className='px-5 py-4 font-bold text-primary'>{formatIdr(e.amount)}</td>
+                        <td className='px-5 py-4'>
+                          <span className='capitalize font-medium block text-primary'>{e.payment_method === 'transfer' ? 'Transfer' : 'Cash'}</span>
+                        </td>
+                        <td className='px-5 py-4 text-center'>
+                          {proofUrl ? (
+                            <button
+                              onClick={() => setPreviewImage(proofUrl)}
+                              className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary/10 hover:bg-[#C86D51] hover:text-white text-primary text-xs font-medium transition'
+                              title='Lihat Bukti'>
+                              <ImageIcon className='w-3.5 h-3.5' />
+                              Lihat Bukti
+                            </button>
+                          ) : (
+                            <span className='text-xs text-primary/40 italic'>Tidak Ada</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )
         ) : activeTab === 'payments' ? (
           filteredPayments.length === 0 ? (
             <div className='p-12 text-center text-primary/50'>
@@ -445,35 +538,23 @@ export default function LaporanPage() {
                 </thead>
                 <tbody className='divide-y divide-secondary/10 text-primary'>
                   {filteredPayments.map((p) => {
-                    const proofUrl = p.payment_proof
-                      ? p.payment_proof.startsWith('http')
-                        ? p.payment_proof
-                        : `http://localhost:3000${p.payment_proof}`
-                      : null;
+                    const proofUrl = p.payment_proof ? (p.payment_proof.startsWith('http') ? p.payment_proof : `http://localhost:3000${p.payment_proof}`) : null;
 
                     return (
                       <tr key={p.id} className='hover:bg-secondary/5 transition'>
                         <td className='px-5 py-4'>
-                          <span className='font-mono font-bold text-xs block text-primary/60'>
-                            #PAY-{String(p.id).padStart(4, '0')}
-                          </span>
+                          <span className='font-mono font-bold text-xs block text-primary/60'>#PAY-{String(p.id).padStart(4, '0')}</span>
                           <span className='text-xs text-primary/50 flex items-center gap-1 mt-0.5'>
                             <Calendar className='w-3 h-3' />
                             {formatDate(p.paid_at || p.created_at)}
                           </span>
                         </td>
                         <td className='px-5 py-4'>
-                          <span className='font-semibold text-primary block'>
-                            {p.order?.order_number || `Order #${p.order_id}`}
-                          </span>
-                          <span className='text-xs text-primary/60'>
-                            Total Order: {formatIdr(p.order?.total_amount)}
-                          </span>
+                          <span className='font-semibold text-primary block'>{p.order?.order_number || `Order #${p.order_id}`}</span>
+                          <span className='text-xs text-primary/60'>Total Order: {formatIdr(p.order?.total_amount)}</span>
                         </td>
                         <td className='px-5 py-4'>
-                          <span className='capitalize font-medium block text-primary'>
-                            {p.payment_method === 'transfer' ? 'Transfer Bank' : 'Tunai / Cash'}
-                          </span>
+                          <span className='capitalize font-medium block text-primary'>{p.payment_method === 'transfer' ? 'Transfer Bank' : 'Tunai / Cash'}</span>
                           {p.rekening && (
                             <span className='text-xs text-primary/60 flex items-center gap-1 mt-0.5'>
                               <Building2 className='w-3 h-3' />
@@ -482,29 +563,18 @@ export default function LaporanPage() {
                           )}
                         </td>
                         <td className='px-5 py-4'>
-                          <span className='text-xs uppercase font-semibold px-2 py-0.5 rounded bg-secondary/15 text-primary/80'>
-                            {p.payment_type || 'full'}
-                          </span>
+                          <span className='text-xs uppercase font-semibold px-2 py-0.5 rounded bg-secondary/15 text-primary/80'>{p.payment_type || 'full'}</span>
                         </td>
-                        <td className='px-5 py-4 font-bold text-primary'>
-                          {formatIdr(p.amount)}
-                        </td>
+                        <td className='px-5 py-4 font-bold text-primary'>{formatIdr(p.amount)}</td>
                         <td className='px-5 py-4'>
-                          <span
-                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getPaymentStatusBadge(
-                              p.status
-                            )}`}
-                          >
-                            {p.status || 'pending'}
-                          </span>
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getPaymentStatusBadge(p.status)}`}>{p.status || 'pending'}</span>
                         </td>
                         <td className='px-5 py-4 text-center'>
                           {proofUrl ? (
                             <button
                               onClick={() => setPreviewImage(proofUrl)}
                               className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary/10 hover:bg-[#C86D51] hover:text-white text-primary text-xs font-medium transition'
-                              title='Lihat Bukti Transfer'
-                            >
+                              title='Lihat Bukti Transfer'>
                               <ImageIcon className='w-3.5 h-3.5' />
                               Lihat Bukti
                             </button>
@@ -519,109 +589,78 @@ export default function LaporanPage() {
               </table>
             </div>
           )
+        ) : filteredOrders.length === 0 ? (
+          <div className='p-12 text-center text-primary/50'>
+            <FileText className='w-10 h-10 mx-auto text-secondary/40 mb-2' />
+            <p className='font-medium'>Belum ada pesanan pre-order sesuai filter</p>
+            <p className='text-xs mt-1'>Coba sesuaikan pilihan tanggal atau filter di atas</p>
+          </div>
         ) : (
-          filteredOrders.length === 0 ? (
-            <div className='p-12 text-center text-primary/50'>
-              <FileText className='w-10 h-10 mx-auto text-secondary/40 mb-2' />
-              <p className='font-medium'>Belum ada pesanan pre-order sesuai filter</p>
-              <p className='text-xs mt-1'>Coba sesuaikan pilihan tanggal atau filter di atas</p>
-            </div>
-          ) : (
-            <div className='overflow-x-auto'>
-              <table className='w-full text-left text-sm'>
-                <thead className='bg-quaternary border-b border-secondary/15 text-primary/70 text-xs font-bold uppercase tracking-wider'>
-                  <tr>
-                    <th className='px-5 py-4'>No. Pesanan</th>
-                    <th className='px-5 py-4'>Pelanggan</th>
-                    <th className='px-5 py-4'>Tgl Pesan & Ambil</th>
-                    <th className='px-5 py-4'>Status Order</th>
-                    <th className='px-5 py-4'>Status Pembayaran</th>
-                    <th className='px-5 py-4 text-right'>Total Tagihan</th>
-                  </tr>
-                </thead>
-                <tbody className='divide-y divide-secondary/10 text-primary'>
-                  {filteredOrders.map((o) => (
-                    <tr key={o.id} className='hover:bg-secondary/5 transition'>
-                      <td className='px-5 py-4 font-semibold text-primary'>
-                        {o.order_number}
-                        {o.order_items?.length > 0 && (
-                          <span className='block text-xs text-primary/50 font-normal mt-0.5'>
-                            {o.order_items.length} jenis kue
-                          </span>
-                        )}
-                      </td>
-                      <td className='px-5 py-4'>
-                        <span className='font-medium block text-primary'>
-                          {o.customer?.name || o.Customer?.name || 'Customer Umum'}
-                        </span>
-                        <span className='text-xs text-primary/60'>
-                          {o.customer?.phone || o.Customer?.phone || '-'}
-                        </span>
-                      </td>
-                      <td className='px-5 py-4 text-xs text-primary/70'>
-                        <div>
-                          <span className='text-primary/40'>Pesan:</span> {formatDate(o.order_date || o.created_at)}
-                        </div>
-                        <div className='mt-0.5'>
-                          <span className='text-primary/40'>Ambil:</span>{' '}
-                          <strong className='text-primary'>
-                            {o.pickup_date ? new Date(o.pickup_date).toLocaleDateString('id-ID') : '-'}
-                          </strong>
-                        </div>
-                      </td>
-                      <td className='px-5 py-4'>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getOrderStatusBadge(
-                            o.status
-                          )}`}
-                        >
-                          {o.status}
-                        </span>
-                      </td>
-                      <td className='px-5 py-4'>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold uppercase ${
-                            o.payment_status === 'paid'
-                              ? 'bg-green-100 text-green-700 border border-green-200'
-                              : o.payment_status === 'partial'
+          <div className='overflow-x-auto'>
+            <table className='w-full text-left text-sm'>
+              <thead className='bg-quaternary border-b border-secondary/15 text-primary/70 text-xs font-bold uppercase tracking-wider'>
+                <tr>
+                  <th className='px-5 py-4'>No. Pesanan</th>
+                  <th className='px-5 py-4'>Pelanggan</th>
+                  <th className='px-5 py-4'>Tgl Pesan & Ambil</th>
+                  <th className='px-5 py-4'>Status Order</th>
+                  <th className='px-5 py-4'>Status Pembayaran</th>
+                  <th className='px-5 py-4 text-right'>Total Tagihan</th>
+                </tr>
+              </thead>
+              <tbody className='divide-y divide-secondary/10 text-primary'>
+                {filteredOrders.map((o) => (
+                  <tr key={o.id} className='hover:bg-secondary/5 transition'>
+                    <td className='px-5 py-4 font-semibold text-primary'>
+                      {o.order_number}
+                      {o.order_items?.length > 0 && <span className='block text-xs text-primary/50 font-normal mt-0.5'>{o.order_items.length} jenis kue</span>}
+                    </td>
+                    <td className='px-5 py-4'>
+                      <span className='font-medium block text-primary'>{o.customer?.name || o.Customer?.name || 'Customer Umum'}</span>
+                      <span className='text-xs text-primary/60'>{o.customer?.phone || o.Customer?.phone || '-'}</span>
+                    </td>
+                    <td className='px-5 py-4 text-xs text-primary/70'>
+                      <div>
+                        <span className='text-primary/40'>Pesan:</span> {formatDate(o.order_date || o.created_at)}
+                      </div>
+                      <div className='mt-0.5'>
+                        <span className='text-primary/40'>Ambil:</span> <strong className='text-primary'>{o.pickup_date ? new Date(o.pickup_date).toLocaleDateString('id-ID') : '-'}</strong>
+                      </div>
+                    </td>
+                    <td className='px-5 py-4'>
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getOrderStatusBadge(o.status)}`}>{o.status}</span>
+                    </td>
+                    <td className='px-5 py-4'>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold uppercase ${
+                          o.payment_status === 'paid'
+                            ? 'bg-green-100 text-green-700 border border-green-200'
+                            : o.payment_status === 'partial'
                               ? 'bg-blue-100 text-blue-700 border border-blue-200'
                               : 'bg-red-100 text-red-700 border border-red-200'
-                          }`}
-                        >
-                          {o.payment_status || 'unpaid'}
-                        </span>
-                      </td>
-                      <td className='px-5 py-4 text-right font-bold text-primary'>
-                        {formatIdr(o.total_amount)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )
+                        }`}>
+                        {o.payment_status || 'unpaid'}
+                      </span>
+                    </td>
+                    <td className='px-5 py-4 text-right font-bold text-primary'>{formatIdr(o.total_amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
       {/* Modal Preview Bukti Gambar */}
       {previewImage && (
-        <div
-          className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm'
-          onClick={() => setPreviewImage(null)}
-        >
-          <div
-            className='bg-white p-4 rounded-2xl max-w-lg w-full shadow-2xl space-y-3 relative'
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm' onClick={() => setPreviewImage(null)}>
+          <div className='bg-white p-4 rounded-2xl max-w-lg w-full shadow-2xl space-y-3 relative' onClick={(e) => e.stopPropagation()}>
             <div className='flex items-center justify-between border-b border-secondary/20 pb-2'>
               <h3 className='font-bold text-primary flex items-center gap-2'>
                 <ImageIcon className='w-4 h-4 text-[#C86D51]' />
                 Bukti Pembayaran
               </h3>
-              <button
-                onClick={() => setPreviewImage(null)}
-                className='text-primary/50 hover:text-primary font-bold text-lg'
-              >
+              <button onClick={() => setPreviewImage(null)} className='text-primary/50 hover:text-primary font-bold text-lg'>
                 ✕
               </button>
             </div>
@@ -639,10 +678,7 @@ export default function LaporanPage() {
             </div>
 
             <div className='flex justify-end pt-2'>
-              <button
-                onClick={() => setPreviewImage(null)}
-                className='px-4 py-2 bg-[#C86D51] text-white rounded-xl text-sm font-semibold hover:bg-[#C86D51]/90 transition'
-              >
+              <button onClick={() => setPreviewImage(null)} className='px-4 py-2 bg-[#C86D51] text-white rounded-xl text-sm font-semibold hover:bg-[#C86D51]/90 transition'>
                 Tutup
               </button>
             </div>
