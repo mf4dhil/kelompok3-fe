@@ -25,11 +25,21 @@ export default function PreOrdersPage() {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newOrder, setNewOrder] = useState({
-    customer_id: '',
+    // Customer data (manual entry)
+    customer_name: '',
+    customer_phone: '',
+    customer_email: '',
+    customer_address: '',
+    // If you still want to support existing customers later, keep optional field (unused for now)
+    // customer_id: '',
     pickup_date: '',
     notes: '',
     payment_method: 'cash',
+    payment_option: 'full', // 'full' or 'partial'
     rekening_id: '',
+    proof_file: null,
+    proof_preview: '',
+    payment_proof: '',
     items: [{ product_variant_id: '', quantity: 1, notes: '' }],
   });
 
@@ -114,8 +124,18 @@ export default function PreOrdersPage() {
     setError('');
     setSuccess('');
     try {
+      // Buat customer baru terlebih dahulu (manual entry)
+      const custPayload = {
+        name: newOrder.customer_name,
+        phone: newOrder.customer_phone,
+        email: newOrder.customer_email,
+        address: newOrder.customer_address,
+      };
+      const createdCustomer = await customersService.create(custPayload);
+      const customerId = createdCustomer.id;
+
       const payload = {
-        customer_id: parseInt(newOrder.customer_id),
+        customer_id: customerId,
         pickup_date: newOrder.pickup_date,
         notes: newOrder.notes,
         payment_method: newOrder.payment_method,
@@ -127,20 +147,55 @@ export default function PreOrdersPage() {
         })),
       };
 
-      await ordersService.create(payload);
+      const orderRes = await ordersService.create(payload);
+      const createdOrder = orderRes.data || orderRes;
+
+      // Jika ada file bukti pembayaran yang diupload saat pembuatan order (misal transfer)
+      if (newOrder.payment_method === 'transfer' && newOrder.proof_file && createdOrder?.id) {
+        try {
+          const totalAmount = newOrder.items.reduce((acc, it) => {
+            const v = allVariants.find(v => v.id === parseInt(it.product_variant_id));
+            return acc + (v?.price || 0) * parseInt(it.quantity);
+          }, 0);
+          const paymentAmount = newOrder.payment_option === 'partial'
+            ? Math.ceil(totalAmount * 0.5)
+            : totalAmount;
+
+          const formData = new FormData();
+          formData.append('order_id', createdOrder.id);
+          formData.append('amount', paymentAmount);
+          formData.append('payment_method', 'transfer');
+          formData.append('payment_type', newOrder.payment_option);
+          if (newOrder.rekening_id) {
+            formData.append('rekening_id', parseInt(newOrder.rekening_id));
+          }
+          formData.append('payment_proof', newOrder.proof_file);
+
+          await api.post('/payments', formData);
+        } catch (payErr) {
+          console.error('Gagal mencatat pembayaran otomatis:', payErr);
+        }
+      }
+
       setSuccess('Order berhasil dibuat');
       setIsCreateModalOpen(false);
       setNewOrder({
-        customer_id: '',
+        customer_name: '',
+        customer_phone: '',
+        customer_email: '',
+        customer_address: '',
         pickup_date: '',
         notes: '',
         payment_method: 'cash',
+        payment_option: 'full',
         rekening_id: '',
+        proof_file: null,
+        proof_preview: '',
         items: [{ product_variant_id: '', quantity: 1, notes: '' }],
       });
       fetchOrders();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || 'Gagal menyimpan order');
     }
   };
 
@@ -174,6 +229,40 @@ export default function PreOrdersPage() {
   };
 
   // Payment Update
+  const handlePrint = () => {
+    if (!selectedOrder) return;
+    const printWindow = window.open('', '', 'height=600,width=800');
+    const styles = `
+      body { font-family: Arial, Helvetica, sans-serif; padding: 20px; }
+      .title { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; }
+      .field { margin-bottom: 0.5rem; }
+      .label { font-weight: bold; }
+    `;
+    printWindow.document.write(`<html><head><title>Struk Order #${selectedOrder.order_number}</title>`);
+    printWindow.document.write(`<style>${styles}</style>`);
+    printWindow.document.write(`</head><body>`);
+    printWindow.document.write(`<div class='title'>Struk Order #${selectedOrder.order_number}</div>`);
+    const cust = selectedOrder.Customer || selectedOrder.customer || {};
+    printWindow.document.write(`<div class='field'><span class='label'>Customer:</span> ${cust.name || '-'} (${cust.phone || '-'})</div>`);
+    printWindow.document.write(`<div class='field'><span class='label'>Tanggal Pickup:</span> ${selectedOrder.pickup_date}</div>`);
+    printWindow.document.write(`<div class='field'><span class='label'>Total:</span> ${formatCurrency(selectedOrder.total_amount)}</div>`);
+    printWindow.document.write(`<div class='field'><span class='label'>Status:</span> ${selectedOrder.status}</div>`);
+    printWindow.document.write(`<div class='field'><span class='label'>Pembayaran:</span> ${selectedOrder.payment_status}</div>`);
+    // Items
+    if ((selectedOrder.OrderItems || selectedOrder.order_items || []).length > 0) {
+      printWindow.document.write('<div class="field"><span class="label">Items:</span><ul>');
+      (selectedOrder.OrderItems || selectedOrder.order_items || []).forEach(item => {
+        const productName = item.ProductVariant?.Product?.name || item.product_variant?.product?.name || 'Produk';
+        printWindow.document.write(`<li>${productName} - Qty: ${item.quantity} - Subtotal: ${formatCurrency(item.quantity * item.price)}</li>`);
+      });
+      printWindow.document.write('</ul></div>');
+    }
+    printWindow.document.write(`</body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  };
+
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -262,6 +351,7 @@ export default function PreOrdersPage() {
         allVariants.push({
           id: v.id,
           name: `${prod.name} (${v.shape?.name || ''} - ${v.size?.name || ''} - ${v.flavor?.name || ''}) - ${formatCurrency(v.price)}`,
+          price: v.price,
         });
       });
     }
@@ -516,7 +606,13 @@ export default function PreOrdersPage() {
                 )}
               </div>
 
-              <div className="flex justify-end pt-4 mt-4 border-t border-secondary/10">
+              <div className="flex justify-end gap-2 pt-4 mt-4 border-t border-secondary/10">
+                <button
+                  onClick={handlePrint}
+                  className="px-4 py-2 bg-secondary/20 text-primary text-sm font-semibold rounded-lg hover:bg-secondary/30 transition"
+                >
+                  🖨️ Cetak Struk
+                </button>
                 <button
                   onClick={() => setIsDetailModalOpen(false)}
                   className="px-4 py-2 bg-tertiary text-primary text-sm font-semibold rounded-lg hover:bg-tertiary/90 transition"
@@ -535,20 +631,38 @@ export default function PreOrdersPage() {
           <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl relative text-primary max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Buat Order Pre-Order Baru</h2>
             <form onSubmit={handleCreateSubmit} className="space-y-4 text-sm">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-primary/70 mb-1">Customer <span className="text-red-500">*</span></label>
-                  <select
-                    value={newOrder.customer_id}
-                    onChange={(e) => setNewOrder({ ...newOrder, customer_id: e.target.value })}
+                  <label className="block text-xs font-medium text-primary/70 mb-1">Nama Customer <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={newOrder.customer_name}
+                    onChange={(e) => setNewOrder({ ...newOrder, customer_name: e.target.value })}
                     required
+                    placeholder="Nama lengkap customer"
                     className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-tertiary"
-                  >
-                    <option value="">-- Pilih Customer --</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name} ({c.phone})</option>
-                    ))}
-                  </select>
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-primary/70 mb-1">No. Telepon <span className="text-red-500">*</span></label>
+                  <input
+                    type="tel"
+                    value={newOrder.customer_phone}
+                    onChange={(e) => setNewOrder({ ...newOrder, customer_phone: e.target.value })}
+                    required
+                    placeholder="08xxxxxxxxxx"
+                    className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-tertiary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-primary/70 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={newOrder.customer_email}
+                    onChange={(e) => setNewOrder({ ...newOrder, customer_email: e.target.value })}
+                    placeholder="email@example.com"
+                    className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-tertiary"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-primary/70 mb-1">Tanggal Pickup <span className="text-red-500">*</span></label>
@@ -560,36 +674,16 @@ export default function PreOrdersPage() {
                     className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-tertiary"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-primary/70 mb-1">Metode Pembayaran</label>
-                  <select
-                    value={newOrder.payment_method}
-                    onChange={(e) => setNewOrder({ ...newOrder, payment_method: e.target.value })}
-                    className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-tertiary"
-                  >
-                    <option value="cash">Cash</option>
-                    <option value="transfer">Transfer</option>
-                  </select>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium text-primary/70 mb-1">Alamat</label>
+                  <textarea
+                    value={newOrder.customer_address}
+                    onChange={(e) => setNewOrder({ ...newOrder, customer_address: e.target.value })}
+                    rows={2}
+                    placeholder="Alamat lengkap customer..."
+                    className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none resize-y"
+                  />
                 </div>
-                {newOrder.payment_method === 'transfer' && (
-                  <div>
-                    <label className="block text-xs font-medium text-primary/70 mb-1">Rekening Tujuan <span className="text-red-500">*</span></label>
-                    <select
-                      value={newOrder.rekening_id}
-                      onChange={(e) => setNewOrder({ ...newOrder, rekening_id: e.target.value })}
-                      required
-                      className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-tertiary"
-                    >
-                      <option value="">-- Pilih Rekening --</option>
-                      {rekenings.map((r) => (
-                        <option key={r.id} value={r.id}>{r.bank_name} - {r.account_number} ({r.account_name})</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
               </div>
 
               <div>
@@ -640,6 +734,76 @@ export default function PreOrdersPage() {
                 </div>
               </div>
 
+              {/* Total Harga */}
+              <div className="mt-4 p-3 bg-secondary/10 rounded-lg border border-secondary/20">
+                <p className="text-sm font-medium text-primary">Total Harga</p>
+                <p className="text-lg font-bold text-primary">
+                  {formatCurrency(
+                    newOrder.items.reduce((acc, it) => {
+                      const v = allVariants.find(v => v.id === parseInt(it.product_variant_id));
+                      return acc + (v?.price || 0) * parseInt(it.quantity);
+                    }, 0)
+                  )}</p>
+              </div>
+
+              {/* Bukti Pembayaran */}
+              {newOrder.payment_method === 'transfer' && (
+                <div className="mt-4">
+                  <label className="block text-xs font-medium text-primary/70 mb-1">
+                    Bukti Pembayaran (Upload Gambar / File)
+                  </label>
+                  <div className="space-y-2">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/jpg"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setNewOrder(prev => ({
+                            ...prev,
+                            proof_file: file,
+                            proof_preview: URL.createObjectURL(file),
+                          }));
+                        }
+                      }}
+                      className="w-full text-xs text-primary file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-secondary/20 file:text-primary hover:file:bg-secondary/30 bg-secondary/10 border border-secondary/25 rounded-lg p-1.5 focus:outline-none"
+                    />
+
+                    {/* Preview Gambar Baru yang dipilih */}
+                    {newOrder.proof_preview && (
+                      <div className="mt-2 p-2 bg-quaternary rounded-lg border border-secondary/20">
+                        <p className="text-[10px] text-primary/60 mb-1 font-semibold">Preview Bukti Baru:</p>
+                        <img
+                          src={newOrder.proof_preview}
+                          alt="Preview Bukti"
+                          className="max-h-36 w-auto rounded border border-secondary/20 object-contain"
+                        />
+                      </div>
+                    )}
+
+                    {/* Preview Gambar Lama jika ada di Database */}
+                    {!newOrder.proof_preview && newOrder.payment_proof && (
+                      <div className="mt-2 p-2 bg-quaternary rounded-lg border border-secondary/20">
+                        <p className="text-[10px] text-primary/60 mb-1 font-semibold">Bukti Tersimpan:</p>
+                        <img
+                          src={
+                            newOrder.payment_proof.startsWith('http')
+                              ? newOrder.payment_proof
+                              : `http://localhost:3000${newOrder.payment_proof}`
+                          }
+                          alt="Bukti Tersimpan"
+                          className="max-h-36 w-auto rounded border border-secondary/20 object-contain"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                        <p className="text-[10px] text-primary/50 break-all mt-1">{newOrder.payment_proof}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-medium text-primary/70 mb-1">Catatan Order</label>
                 <textarea
@@ -649,6 +813,93 @@ export default function PreOrdersPage() {
                   placeholder="Catatan tambahan..."
                   className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none resize-none"
                 />
+              </div>
+
+              {/* Bagian Pembayaran di Paling Bawah */}
+              <div className="pt-2 border-t border-secondary/10 space-y-4">
+                <p className="text-xs font-bold text-primary uppercase tracking-wider">Informasi Pembayaran</p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-primary/70 mb-1">Opsi Pembayaran</label>
+                    <select
+                      value={newOrder.payment_option}
+                      onChange={(e) => setNewOrder({ ...newOrder, payment_option: e.target.value })}
+                      className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none"
+                    >
+                      <option value="full">Cash / Lunas (100%)</option>
+                      <option value="partial">Partial / DP (50%)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-primary/70 mb-1">Metode Pembayaran</label>
+                    <select
+                      value={newOrder.payment_method}
+                      onChange={(e) => setNewOrder({
+                        ...newOrder,
+                        payment_method: e.target.value,
+                        ...(e.target.value === 'cash' ? { proof_file: null, proof_preview: '' } : {})
+                      })}
+                      className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none"
+                    >
+                      <option value="cash">Cash</option>
+                      <option value="transfer">Transfer Bank</option>
+                    </select>
+                  </div>
+                </div>
+
+                {newOrder.payment_method === 'transfer' && (
+                  <div>
+                    <label className="block text-xs font-medium text-primary/70 mb-1">Rekening Tujuan <span className="text-red-500">*</span></label>
+                    <select
+                      value={newOrder.rekening_id}
+                      onChange={(e) => setNewOrder({ ...newOrder, rekening_id: e.target.value })}
+                      required
+                      className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none"
+                    >
+                      <option value="">-- Pilih Rekening --</option>
+                      {rekenings.map((r) => (
+                        <option key={r.id} value={r.id}>{r.bank_name} - {r.account_number} ({r.account_name})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Upload Bukti Pembayaran */}
+                {newOrder.payment_method === 'transfer' && (
+                  <div>
+                    <label className="block text-xs font-medium text-primary/70 mb-1">
+                      Bukti Transfer (Upload Gambar)
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/jpg"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setNewOrder(prev => ({
+                            ...prev,
+                            proof_file: file,
+                            proof_preview: URL.createObjectURL(file),
+                          }));
+                        }
+                      }}
+                      className="w-full text-xs text-primary file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-secondary/20 file:text-primary hover:file:bg-secondary/30 bg-secondary/10 border border-secondary/25 rounded-lg p-1.5 focus:outline-none"
+                    />
+
+                    {newOrder.proof_preview && (
+                      <div className="mt-2 p-2 bg-quaternary rounded-lg border border-secondary/20 w-fit">
+                        <p className="text-[10px] text-primary/60 mb-1 font-semibold">Preview Bukti:</p>
+                        <img
+                          src={newOrder.proof_preview}
+                          alt="Preview Bukti"
+                          className="max-h-32 w-auto rounded border border-secondary/20 object-contain"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-4 border-t border-secondary/10">
@@ -761,60 +1012,62 @@ export default function PreOrdersPage() {
                   </select>
                 </div>
               )}
-              <div>
-                <label className="block text-xs font-medium text-primary/70 mb-1">
-                  Bukti Pembayaran (Upload Gambar / File)
-                </label>
-                <div className="space-y-2">
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/jpg"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        setPaymentForm((prev) => ({
-                          ...prev,
-                          proof_file: file,
-                          proof_preview: URL.createObjectURL(file),
-                        }));
-                      }
-                    }}
-                    className="w-full text-xs text-primary file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-secondary/20 file:text-primary hover:file:bg-secondary/30 bg-secondary/10 border border-secondary/25 rounded-lg p-1.5 focus:outline-none"
-                  />
-
-                  {/* Preview Gambar Baru yang dipilih */}
-                  {paymentForm.proof_preview && (
-                    <div className="mt-2 p-2 bg-quaternary rounded-lg border border-secondary/20">
-                      <p className="text-[10px] text-primary/60 mb-1 font-semibold">Preview Bukti Baru:</p>
-                      <img
-                        src={paymentForm.proof_preview}
-                        alt="Preview Bukti"
-                        className="max-h-36 w-auto rounded border border-secondary/20 object-contain"
-                      />
-                    </div>
-                  )}
-
-                  {/* Preview Gambar Lama jika ada di Database */}
-                  {!paymentForm.proof_preview && paymentForm.payment_proof && (
-                    <div className="mt-2 p-2 bg-quaternary rounded-lg border border-secondary/20">
-                      <p className="text-[10px] text-primary/60 mb-1 font-semibold">Bukti Tersimpan:</p>
-                      <img
-                        src={
-                          paymentForm.payment_proof.startsWith('http')
-                            ? paymentForm.payment_proof
-                            : `http://localhost:3000${paymentForm.payment_proof}`
+              {paymentForm.payment_method === 'transfer' && (
+                <div>
+                  <label className="block text-xs font-medium text-primary/70 mb-1">
+                    Bukti Pembayaran (Upload Gambar / File)
+                  </label>
+                  <div className="space-y-2">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/jpg"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setPaymentForm((prev) => ({
+                            ...prev,
+                            proof_file: file,
+                            proof_preview: URL.createObjectURL(file),
+                          }));
                         }
-                        alt="Bukti Tersimpan"
-                        className="max-h-36 w-auto rounded border border-secondary/20 object-contain"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                      <p className="text-[10px] text-primary/50 break-all mt-1">{paymentForm.payment_proof}</p>
-                    </div>
-                  )}
+                      }}
+                      className="w-full text-xs text-primary file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-secondary/20 file:text-primary hover:file:bg-secondary/30 bg-secondary/10 border border-secondary/25 rounded-lg p-1.5 focus:outline-none"
+                    />
+
+                    {/* Preview Gambar Baru yang dipilih */}
+                    {paymentForm.proof_preview && (
+                      <div className="mt-2 p-2 bg-quaternary rounded-lg border border-secondary/20">
+                        <p className="text-[10px] text-primary/60 mb-1 font-semibold">Preview Bukti Baru:</p>
+                        <img
+                          src={paymentForm.proof_preview}
+                          alt="Preview Bukti"
+                          className="max-h-36 w-auto rounded border border-secondary/20 object-contain"
+                        />
+                      </div>
+                    )}
+
+                    {/* Preview Gambar Lama jika ada di Database */}
+                    {!paymentForm.proof_preview && paymentForm.payment_proof && (
+                      <div className="mt-2 p-2 bg-quaternary rounded-lg border border-secondary/20">
+                        <p className="text-[10px] text-primary/60 mb-1 font-semibold">Bukti Tersimpan:</p>
+                        <img
+                          src={
+                            paymentForm.payment_proof.startsWith('http')
+                              ? paymentForm.payment_proof
+                              : `http://localhost:3000${paymentForm.payment_proof}`
+                          }
+                          alt="Bukti Tersimpan"
+                          className="max-h-36 w-auto rounded border border-secondary/20 object-contain"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                        <p className="text-[10px] text-primary/50 break-all mt-1">{paymentForm.payment_proof}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"

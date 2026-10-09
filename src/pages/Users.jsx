@@ -141,21 +141,21 @@ function Users() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#FAF5EE]">
+    <div className="flex min-h-screen bg-quaternary">
       <div className="flex-1 min-w-0">
         <main className="p-6">
           {/* HEADER */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-[#2B1B17]">Admin User</h1>
-              <p className="text-sm text-[#2B1B17]/60 mt-1">
+              <h1 className="text-2xl font-bold text-primary">Admin User</h1>
+              <p className="text-sm text-primary/60 mt-1">
                 Kelola data pengguna sistem CakeOrder
               </p>
             </div>
 
             <button
               onClick={handleAddUser}
-              className="px-5 py-3 rounded-lg bg-[#C86D51] text-white font-medium hover:bg-[#2B1B17] transition"
+              className="px-5 py-3 rounded-lg bg-secondary text-white font-medium hover:bg-primary transition"
             >
               + Tambah User
             </button>
@@ -163,7 +163,7 @@ function Users() {
 
           {/* PESAN ERROR */}
           {errorMsg && (
-            <div className="mb-4 px-4 py-3 rounded-lg bg-[#C86D51]/10 text-[#C86D51] text-sm flex items-center justify-between">
+            <div className="mb-4 px-4 py-3 rounded-lg bg-secondary/10 text-secondary text-sm flex items-center justify-between">
               <span>{errorMsg}</span>
               <button onClick={fetchUsers} className="underline font-medium">
                 Coba lagi
@@ -172,22 +172,22 @@ function Users() {
           )}
 
           {/* TABLE CARD */}
-          <div className="bg-white rounded-xl border border-[#2B1B17]/10 shadow-sm">
+          <div className="bg-white rounded-xl border border-primary/10 shadow-sm">
             {/* SEARCH & FILTER */}
-            <div className="p-5 border-b border-[#2B1B17]/10">
+            <div className="p-5 border-b border-primary/10">
               <div className="flex flex-col md:flex-row gap-3">
                 <input
                   type="text"
                   placeholder="Cari nama atau email..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="flex-1 px-4 py-3 rounded-lg border border-[#2B1B17]/20 bg-white text-[#2B1B17] placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#C86D51]"
+                  className="flex-1 px-4 py-3 rounded-lg border border-primary/20 bg-white text-primary placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-secondary"
                 />
 
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className="px-4 py-3 rounded-lg border border-[#2B1B17]/20 bg-white text-[#2B1B17] focus:outline-none focus:ring-2 focus:ring-[#C86D51]"
+                  className="px-4 py-3 rounded-lg border border-primary/20 bg-white text-primary focus:outline-none focus:ring-2 focus:ring-secondary"
                 >
                   <option value="Semua">Semua Role</option>
                   <option value="Admin">Admin</option>

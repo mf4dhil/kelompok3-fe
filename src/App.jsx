@@ -18,6 +18,7 @@ import LaporanPage from './pages/LaporanPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Pelanggan from './pages/Pelanggan';
 
+
 // Material & Inventory
 import MaterialsPage from './pages/materials/MaterialsPage';
 import LowStockPage from './pages/materials/LowStockPage';

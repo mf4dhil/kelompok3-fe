@@ -61,7 +61,7 @@ export const updateProductStatus = async (id, payload) => {
 
 export const addProductVariants = async (id, variants) => {
   try {
-    const { data } = await api.put(`/products/${id}/variants`, variants);
+    const { data } = await api.put(`/products/${id}/variants`, { variants });
     return data;
   } catch (error) {
     return handleError(error);
