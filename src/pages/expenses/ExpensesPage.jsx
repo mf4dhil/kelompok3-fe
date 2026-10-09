@@ -141,6 +141,7 @@ export default function ExpensesPage() {
             <table className="w-full text-left text-sm">
               <thead className="bg-quaternary border-b border-secondary/20 text-xs font-semibold text-primary uppercase">
                 <tr>
+                  <th className="px-6 py-3">No.</th>
                   <th className="px-6 py-3">No. Expense</th>
                   <th className="px-6 py-3">Tanggal</th>
                   <th className="px-6 py-3">Kategori</th>
@@ -151,8 +152,11 @@ export default function ExpensesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-secondary/10">
-                {expenses.map((item) => (
+                {expenses.map((item, index) => (
                   <tr key={item.id} className="hover:bg-quaternary/50 transition">
+                    <td className="px-6 py-4 font-mono text-xs text-primary/70">
+                      {`${index + 1}.`}
+                    </td>
                     <td className="px-6 py-4 font-mono text-xs text-primary/70">
                       {item.expense_number || `EXP-${item.id}`}
                     </td>

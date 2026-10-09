@@ -32,6 +32,9 @@ function OrderTable({ orders }) {
           <thead className="bg-[#FAF5EE]">
             <tr>
               <th className="text-left px-5 py-3 text-sm font-semibold text-[#2B1B17]">
+                No.
+              </th>
+              <th className="text-left px-5 py-3 text-sm font-semibold text-[#2B1B17]">
                 No. Order
               </th>
               <th className="text-left px-5 py-3 text-sm font-semibold text-[#2B1B17]">
@@ -58,6 +61,9 @@ function OrderTable({ orders }) {
                   key={order.id}
                   className="border-t border-[#2B1B17]/10 hover:bg-[#FAF5EE]/70 transition"
                 >
+                  <td className="px-5 py-4 text-sm font-mono font-bold text-[#2B1B17]">
+                    {`${index + 1}.`}
+                  </td>
                   <td className="px-5 py-4 text-sm font-mono font-bold text-[#2B1B17]">
                     {order.order_number || `#${index + 1}`}
                   </td>
