@@ -241,39 +241,203 @@ export default function PreOrdersPage() {
   };
 
   // Payment Update
+  // const handlePrint = () => {
+  //   if (!selectedOrder) return;
+  //   const printWindow = window.open('', '', 'height=600,width=800');
+  //   const styles = `
+  //     body { font-family: Arial, Helvetica, sans-serif; padding: 20px; }
+  //     .title { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; }
+  //     .field { margin-bottom: 0.5rem; }
+  //     .label { font-weight: bold; }
+  //   `;
+  //   printWindow.document.write(`<html><head><title>Struk Order #${selectedOrder.order_number}</title>`);
+  //   printWindow.document.write(`<style>${styles}</style>`);
+  //   printWindow.document.write(`</head><body>`);
+  //   printWindow.document.write(`<div class='title'>Struk Order #${selectedOrder.order_number}</div>`);
+  //   const cust = selectedOrder.Customer || selectedOrder.customer || {};
+  //   printWindow.document.write(`<div class='field'><span class='label'>Customer:</span> ${cust.name || '-'} (${cust.phone || '-'})</div>`);
+  //   printWindow.document.write(`<div class='field'><span class='label'>Tanggal Pickup:</span> ${selectedOrder.pickup_date}</div>`);
+  //   printWindow.document.write(`<div class='field'><span class='label'>Total:</span> ${formatCurrency(selectedOrder.total_amount)}</div>`);
+  //   printWindow.document.write(`<div class='field'><span class='label'>Status:</span> ${selectedOrder.status}</div>`);
+  //   printWindow.document.write(`<div class='field'><span class='label'>Pembayaran:</span> ${selectedOrder.payment_status}</div>`);
+  //   // Items
+  //   if ((selectedOrder.OrderItems || selectedOrder.order_items || []).length > 0) {
+  //     printWindow.document.write('<div class="field"><span class="label">Items:</span><ul>');
+  //     (selectedOrder.OrderItems || selectedOrder.order_items || []).forEach((item) => {
+  //       const productName = item.ProductVariant?.Product?.name || item.product_variant?.product?.name || 'Produk';
+  //       printWindow.document.write(`<li>${productName} - Qty: ${item.quantity} - Subtotal: ${formatCurrency(item.quantity * item.price)}</li>`);
+  //     });
+  //     printWindow.document.write('</ul></div>');
+  //   }
+  //   printWindow.document.write(`</body></html>`);
+  //   printWindow.document.close();
+  //   printWindow.focus();
+  //   printWindow.print();
+  // };
+
   const handlePrint = () => {
-    if (!selectedOrder) return;
-    const printWindow = window.open('', '', 'height=600,width=800');
-    const styles = `
-      body { font-family: Arial, Helvetica, sans-serif; padding: 20px; }
-      .title { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; }
-      .field { margin-bottom: 0.5rem; }
-      .label { font-weight: bold; }
-    `;
-    printWindow.document.write(`<html><head><title>Struk Order #${selectedOrder.order_number}</title>`);
-    printWindow.document.write(`<style>${styles}</style>`);
-    printWindow.document.write(`</head><body>`);
-    printWindow.document.write(`<div class='title'>Struk Order #${selectedOrder.order_number}</div>`);
-    const cust = selectedOrder.Customer || selectedOrder.customer || {};
-    printWindow.document.write(`<div class='field'><span class='label'>Customer:</span> ${cust.name || '-'} (${cust.phone || '-'})</div>`);
-    printWindow.document.write(`<div class='field'><span class='label'>Tanggal Pickup:</span> ${selectedOrder.pickup_date}</div>`);
-    printWindow.document.write(`<div class='field'><span class='label'>Total:</span> ${formatCurrency(selectedOrder.total_amount)}</div>`);
-    printWindow.document.write(`<div class='field'><span class='label'>Status:</span> ${selectedOrder.status}</div>`);
-    printWindow.document.write(`<div class='field'><span class='label'>Pembayaran:</span> ${selectedOrder.payment_status}</div>`);
-    // Items
-    if ((selectedOrder.OrderItems || selectedOrder.order_items || []).length > 0) {
-      printWindow.document.write('<div class="field"><span class="label">Items:</span><ul>');
-      (selectedOrder.OrderItems || selectedOrder.order_items || []).forEach((item) => {
-        const productName = item.ProductVariant?.Product?.name || item.product_variant?.product?.name || 'Produk';
-        printWindow.document.write(`<li>${productName} - Qty: ${item.quantity} - Subtotal: ${formatCurrency(item.quantity * item.price)}</li>`);
-      });
-      printWindow.document.write('</ul></div>');
+  if (!selectedOrder) return;
+
+  const o = selectedOrder;
+  const cust = o.Customer || o.customer || {};
+  const items = o.OrderItems || o.order_items || [];
+  const payments = (o.payments || []).filter((p) => p.status !== 'rejected');
+
+  // Escape agar teks dari user tidak merusak HTML struk
+  const esc = (v) =>
+    String(v ?? '-')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+  const totalAmount = Number(o.total_amount) || 0;
+  const paidAmount = payments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+  const remaining = Math.max(totalAmount - paidAmount, 0);
+
+  const fmtDate = (d) =>
+    d
+      ? new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
+      : '-';
+  const printedAt = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+
+  const itemsHtml = items
+    .map((item) => {
+      const variant = item.ProductVariant || item.productvariant || item.product_variant || {};
+      const name = variant.Product?.name || variant.product?.name || 'Kue';
+      const detail = [variant.shape?.name, variant.size?.name, variant.flavor?.name]
+        .filter(Boolean)
+        .join(' / ');
+      return `
+        <div class="item">
+          <div class="item-name">${esc(name)}</div>
+          ${detail ? `<div class="item-detail">${esc(detail)}</div>` : ''}
+          ${item.notes ? `<div class="item-detail">Catatan: ${esc(item.notes)}</div>` : ''}
+          <div class="row">
+            <span>${item.quantity} x ${formatCurrency(item.price)}</span>
+            <span>${formatCurrency(item.quantity * item.price)}</span>
+          </div>
+        </div>`;
+    })
+    .join('');
+
+  const paymentsHtml = payments.length
+    ? payments
+        .map(
+          (p) => `
+        <div class="row">
+          <span>${esc(p.payment_method)}${p.rekening?.bank_name ? ` (${esc(p.rekening.bank_name)})` : ''}</span>
+          <span>${formatCurrency(p.amount)}</span>
+        </div>`,
+        )
+        .join('')
+    : '<div class="muted center">Belum ada pembayaran</div>';
+
+  const statusLabel =
+    o.payment_status === 'paid' ? 'LUNAS' : o.payment_status === 'partial' ? 'DP / SEBAGIAN' : 'BELUM BAYAR';
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Struk #${esc(o.order_number)}</title>
+  <style>
+    @page { size: 80mm auto; margin: 0; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 12px;
+      color: #000;
+      width: 80mm;
+      margin: 0 auto;
+      padding: 6mm 5mm;
     }
-    printWindow.document.write(`</body></html>`);
-    printWindow.document.close();
+    .center { text-align: center; }
+    .muted { color: #555; font-size: 11px; }
+    .shop { font-size: 16px; font-weight: bold; letter-spacing: 1px; }
+    .divider { border-top: 1px dashed #000; margin: 8px 0; }
+    .row { display: flex; justify-content: space-between; gap: 8px; }
+    .row span:last-child { text-align: right; white-space: nowrap; }
+    .label { color: #555; }
+    .item { margin-bottom: 8px; }
+    .item-name { font-weight: bold; }
+    .item-detail { font-size: 11px; color: #555; }
+    .total { font-size: 14px; font-weight: bold; }
+    .badge {
+      display: inline-block;
+      border: 1px solid #000;
+      padding: 2px 10px;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+    .thanks { margin-top: 10px; font-size: 11px; }
+    @media print { body { width: 100%; } }
+  </style>
+</head>
+<body>
+  <div class="center">
+    <div class="shop">NAMA TOKO KUE</div>
+    <div class="muted">Jl. Alamat Toko No. 1, Jakarta</div>
+    <div class="muted">Telp: 08xx-xxxx-xxxx</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="row"><span class="label">No. Order</span><span>#${esc(o.order_number)}</span></div>
+  <div class="row"><span class="label">Dicetak</span><span>${printedAt}</span></div>
+  <div class="row"><span class="label">Pickup</span><span>${fmtDate(o.pickup_date)}</span></div>
+  <div class="row"><span class="label">Status</span><span style="text-transform:capitalize">${esc(o.status)}</span></div>
+
+  <div class="divider"></div>
+
+  <div><span class="label">Customer</span></div>
+  <div><strong>${esc(cust.name)}</strong></div>
+  <div>${esc(cust.phone)}</div>
+  ${cust.address ? `<div class="muted">${esc(cust.address)}</div>` : ''}
+
+  <div class="divider"></div>
+
+  ${itemsHtml || '<div class="muted center">Tidak ada item</div>'}
+
+  <div class="divider"></div>
+
+  <div class="row total"><span>TOTAL</span><span>${formatCurrency(totalAmount)}</span></div>
+
+  <div class="divider"></div>
+
+  <div class="label" style="margin-bottom:4px">Pembayaran</div>
+  ${paymentsHtml}
+  <div class="row" style="margin-top:6px"><span>Sudah Dibayar</span><span>${formatCurrency(paidAmount)}</span></div>
+  <div class="row"><span><strong>Sisa Tagihan</strong></span><span><strong>${formatCurrency(remaining)}</strong></span></div>
+
+  <div class="center" style="margin-top:8px">
+    <span class="badge">${statusLabel}</span>
+  </div>
+
+  ${o.notes ? `<div class="divider"></div><div class="muted">Catatan: ${esc(o.notes)}</div>` : ''}
+
+  <div class="divider"></div>
+  <div class="center thanks">
+    Terima kasih atas pesanan Anda!<br/>
+    Harap tunjukkan struk ini saat pengambilan.
+  </div>
+</body>
+</html>`;
+
+  const printWindow = window.open('', '_blank', 'width=400,height=700');
+  if (!printWindow) {
+    setError('Popup diblokir browser. Izinkan popup untuk mencetak struk.');
+    return;
+  }
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.onload = () => {
     printWindow.focus();
     printWindow.print();
+    printWindow.onafterprint = () => printWindow.close();
   };
+};
 
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
