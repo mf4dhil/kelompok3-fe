@@ -16,7 +16,7 @@ import RekeningsPage from './pages/master/RekeningsPage';
 import PreOrdersPage from './pages/PreOrdersPage';
 import LaporanPage from './pages/LaporanPage';
 import ProtectedRoute from './components/ProtectedRoute';
-import Pelanggan from './pages/Pelanggan';
+// import Pelanggan from './pages/Pelanggan';
 
 
 // Material & Inventory
@@ -45,7 +45,7 @@ function App() {
             <Route path='/users' Component={Users} />
             <Route path='/preorder' Component={PreOrdersPage} />
             <Route path='/laporan' Component={LaporanPage} />
-            <Route path='/pelanggan' Component={Pelanggan} />
+            {/* <Route path='/pelanggan' Component={Pelanggan} /> */}
             
             {/* Master Data Routes */}
             <Route path='/master-data' Component={MasterDataPage}>
