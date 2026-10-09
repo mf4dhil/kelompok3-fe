@@ -86,7 +86,7 @@ function Sidebar({ isOpen, onClose }) {
             </Link>
           </li>
 
-          <li>
+          {/* <li>
             <Link
               to="/pelanggan"
               onClick={onClose}
@@ -94,7 +94,7 @@ function Sidebar({ isOpen, onClose }) {
             >
               Pelanggan
             </Link>
-          </li>
+          </li> */}
 
           <li>
             <Link

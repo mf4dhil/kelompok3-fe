@@ -143,23 +143,44 @@ export default function ExpenseDetailPage() {
         <div className="bg-white rounded-xl border border-secondary/20 p-6 shadow-sm space-y-5">
           <div className="flex items-center justify-between pb-4 border-b border-secondary/10">
             <h2 className="text-lg font-bold text-primary">Informasi Pengeluaran</h2>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setIsEditing(true)}
-                className="inline-flex items-center gap-1 px-3 py-1.5 bg-tertiary/20 text-primary hover:bg-tertiary/40 rounded transition text-xs font-semibold"
-              >
-                <Edit size={14} />
-                Edit
-              </button>
-              <button
-                onClick={handleDelete}
-                className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-600 hover:bg-red-200 rounded transition text-xs font-semibold"
-              >
-                <Trash2 size={14} />
-                Hapus
-              </button>
-            </div>
+            {!expense.purchase_id && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-tertiary/20 text-primary hover:bg-tertiary/40 rounded transition text-xs font-semibold"
+                >
+                  <Edit size={14} />
+                  Edit
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-600 hover:bg-red-200 rounded transition text-xs font-semibold"
+                >
+                  <Trash2 size={14} />
+                  Hapus
+                </button>
+              </div>
+            )}
           </div>
+
+          {expense.purchase_id && (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+              <p className="font-semibold mb-1">ℹ️ Pengeluaran Otomatis (Pembelian Bahan Baku)</p>
+              <p>
+                Pengeluaran ini dibuat secara otomatis dari transaksi pembelian bahan baku{' '}
+                {expense.purchase?.purchase_number && (
+                  <span className="font-mono font-bold">({expense.purchase.purchase_number})</span>
+                )}. 
+                Data tidak dapat diedit atau dihapus manual untuk menjaga konsistensi keuangan & stok.{' '}
+                <Link
+                  to={`/material-purchases/${expense.purchase_id}`}
+                  className="underline font-semibold hover:text-blue-900 ml-1 inline-flex items-center gap-0.5"
+                >
+                  Buka Detail Pembelian →
+                </Link>
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm">
             <div>

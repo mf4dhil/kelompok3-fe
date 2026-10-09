@@ -98,6 +98,43 @@ export const materialService = {
       return handleError(error);
     }
   },
+
+  // Units
+  getUnits: async (id) => {
+    try {
+      const { data } = await api.get(`/materials/${id}/units`);
+      return data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  createUnit: async (id, payload) => {
+    try {
+      const { data } = await api.post(`/materials/${id}/units`, payload);
+      return data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  updateUnit: async (id, unitId, payload) => {
+    try {
+      const { data } = await api.patch(`/materials/${id}/units/${unitId}`, payload);
+      return data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  deleteUnit: async (id, unitId) => {
+    try {
+      const { data } = await api.delete(`/materials/${id}/units/${unitId}`);
+      return data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
 };
 
 // Material Purchases

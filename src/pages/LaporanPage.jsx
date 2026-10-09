@@ -25,6 +25,9 @@ export default function LaporanPage() {
   // Selected payment proof modal
   const [previewImage, setPreviewImage] = useState(null);
 
+  // Expanded expense for detail item purchase
+  const [expandedExpenseId, setExpandedExpenseId] = useState(null);
+
   useEffect(() => {
     fetchData();
   }, [activeTab, paymentStatusFilter, paymentMethodFilter, orderStatusFilter, orderPaymentStatusFilter, dateFrom, dateTo]);
@@ -476,41 +479,176 @@ export default function LaporanPage() {
                   {filteredExpenses.map((e, index) => {
                     const category = e.category?.name || '-';
                     const proofUrl = e.receipt ? (e.receipt.startsWith('http') ? e.receipt : `http://localhost:3000${e.receipt}`) : null;
+                    const linkedPurchase = e.purchase;
+                    const purchaseItems = linkedPurchase?.items || [];
+                    const isExpanded = expandedExpenseId === e.id;
+                    const isTransfer = (e.payment_method || '').toLowerCase() === 'transfer';
 
                     return (
-                      <tr key={e.id} className='hover:bg-secondary/5 transition'>
-                        <td className='px-5 py-4 text-xs text-primary/60'>{index + 1}</td>
-                        <td className='px-5 py-4'>
-                          <span className='font-mono font-bold text-xs block text-primary/60'>EXP-{String(e.id).padStart(4, '0')}</span>
-                          <span className='text-xs text-primary/50 flex items-center gap-1 mt-0.5'>
-                            <Calendar className='w-3 h-3' />
-                            {formatDate(e.expense_date)}
-                          </span>
-                        </td>
-                        <td className='px-5 py-4'>
-                          <span className='capitalize font-medium block text-primary'>{category}</span>
-                        </td>
-                        <td className='px-5 py-4'>
-                          <span className='text-xs text-primary/60'>{e.description || '-'}</span>
-                        </td>
-                        <td className='px-5 py-4 font-bold text-primary'>{formatIdr(e.amount)}</td>
-                        <td className='px-5 py-4'>
-                          <span className='capitalize font-medium block text-primary'>{e.payment_method === 'transfer' ? 'Transfer' : 'Cash'}</span>
-                        </td>
-                        <td className='px-5 py-4 text-center'>
-                          {proofUrl ? (
-                            <button
-                              onClick={() => setPreviewImage(proofUrl)}
-                              className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary/10 hover:bg-secondary hover:text-white text-primary text-xs font-medium transition'
-                              title='Lihat Bukti'>
-                              <ImageIcon className='w-3.5 h-3.5' />
-                              Lihat Bukti
-                            </button>
-                          ) : (
-                            <span className='text-xs text-primary/40 italic'>Tidak Ada</span>
-                          )}
-                        </td>
-                      </tr>
+                      <React.Fragment key={e.id}>
+                        <tr
+                          className={`hover:bg-secondary/5 transition ${linkedPurchase ? 'cursor-pointer' : ''}`}
+                          onClick={() => linkedPurchase && setExpandedExpenseId(isExpanded ? null : e.id)}
+                        >
+                          <td className='px-5 py-4 text-xs text-primary/60'>{index + 1}</td>
+                          <td className='px-5 py-4'>
+                            <span className='font-mono font-bold text-xs block text-primary/60'>EXP-{String(e.id).padStart(4, '0')}</span>
+                            <span className='text-xs text-primary/50 flex items-center gap-1 mt-0.5'>
+                              <Calendar className='w-3 h-3' />
+                              {formatDate(e.expense_date)}
+                            </span>
+                          </td>
+                          <td className='px-5 py-4'>
+                            <span className='capitalize font-medium block text-primary'>{category}</span>
+                            {linkedPurchase && (
+                              <span className='inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md mt-1'>
+                                📦 {linkedPurchase.purchase_number}
+                              </span>
+                            )}
+                          </td>
+                          <td className='px-5 py-4'>
+                            <span className='text-xs text-primary/70'>{e.description || '-'}</span>
+                          </td>
+                          <td className='px-5 py-4 font-bold text-primary'>{formatIdr(e.amount)}</td>
+                          <td className='px-5 py-4'>
+                            <span className='capitalize font-medium block text-primary'>
+                              {isTransfer ? 'Transfer' : 'Cash'}
+                            </span>
+                          </td>
+                          <td className='px-5 py-4 text-center'>
+                            {linkedPurchase ? (
+                              <button
+                                type="button"
+                                onClick={(ev) => {
+                                  ev.stopPropagation();
+                                  setExpandedExpenseId(isExpanded ? null : e.id);
+                                }}
+                                className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+                                  isExpanded
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
+                                }`}
+                                title="Lihat detail item bahan baku"
+                              >
+                                {isExpanded ? (
+                                  <>
+                                    <ChevronUp className="w-3.5 h-3.5" /> Tutup
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDown className="w-3.5 h-3.5" /> Rincian Bahan
+                                  </>
+                                )}
+                              </button>
+                            ) : proofUrl ? (
+                              <button
+                                onClick={(ev) => {
+                                  ev.stopPropagation();
+                                  setPreviewImage(proofUrl);
+                                }}
+                                className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary/10 hover:bg-secondary hover:text-white text-primary text-xs font-medium transition'
+                                title='Lihat Bukti'>
+                                <ImageIcon className='w-3.5 h-3.5' />
+                                Lihat Bukti
+                              </button>
+                            ) : (
+                              <span className='text-xs text-primary/40 italic'>Tidak Ada</span>
+                            )}
+                          </td>
+                        </tr>
+
+                        {/* Expandable row detail bahan baku: QTY & HARGA SATUAN */}
+                        {isExpanded && (
+                          <tr className="bg-blue-50/40">
+                            <td colSpan={7} className="px-6 py-4">
+                              <div className="bg-white border border-blue-200 rounded-xl p-4 shadow-sm space-y-3">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-blue-100 gap-2">
+                                  <div>
+                                    <h4 className="font-bold text-primary text-xs flex items-center gap-1.5">
+                                      <span>📦 Rincian Item Pembelian Bahan Baku</span>
+                                      <span className="font-mono text-blue-700">({linkedPurchase.purchase_number})</span>
+                                    </h4>
+                                    <p className="text-[11px] text-primary/60 mt-0.5">
+                                      Perhitungan logis di lapangan: Qty × Harga Satuan = Subtotal
+                                    </p>
+                                  </div>
+                                  <div className="text-xs text-primary/70">
+                                    Total Faktur: <strong className="text-primary font-bold">{formatIdr(linkedPurchase.total_amount)}</strong>
+                                  </div>
+                                </div>
+
+                                {purchaseItems.length === 0 ? (
+                                  <p className="text-xs text-primary/50 italic py-2">
+                                    Belum ada detail item tercatat pada dokumen ini.
+                                  </p>
+                                ) : (
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-xs">
+                                      <thead className="bg-secondary/10 text-primary font-bold uppercase text-[10px]">
+                                        <tr>
+                                          <th className="px-3 py-2 text-left">Nama Bahan Baku</th>
+                                          <th className="px-3 py-2 text-center">Qty Pembelian</th>
+                                          <th className="px-3 py-2 text-center">Masuk Stok (Dasar)</th>
+                                          <th className="px-3 py-2 text-right">Harga Satuan</th>
+                                          <th className="px-3 py-2 text-right">Subtotal</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-secondary/10 text-primary">
+                                        {purchaseItems.map((item, idx) => {
+                                          const baseUnit = item.material?.unit || '';
+                                          const unitName = item.unit_name || item.unit?.name || baseUnit;
+                                          const qty = Number(item.quantity);
+                                          const baseQty = item.base_quantity !== undefined && item.base_quantity !== null
+                                            ? Number(item.base_quantity)
+                                            : qty;
+                                          const isDifferent = Math.abs(qty - baseQty) > 0.0001 || unitName !== baseUnit;
+
+                                          return (
+                                            <tr key={item.id || idx} className="hover:bg-blue-50/30">
+                                              <td className="px-3 py-2 font-medium">
+                                                {item.material?.name || `Material #${item.material_id}`}
+                                              </td>
+                                              <td className="px-3 py-2 text-center font-medium">
+                                                {qty.toLocaleString('id-ID', { maximumFractionDigits: 4 })} {unitName}
+                                              </td>
+                                              <td className="px-3 py-2 text-center text-primary/70">
+                                                {isDifferent ? (
+                                                  <span className="font-semibold text-blue-700 bg-blue-100/70 px-1.5 py-0.5 rounded text-[11px]">
+                                                    +{baseQty.toLocaleString('id-ID', { maximumFractionDigits: 4 })} {baseUnit}
+                                                  </span>
+                                                ) : (
+                                                  <span>{baseQty.toLocaleString('id-ID', { maximumFractionDigits: 4 })} {baseUnit}</span>
+                                                )}
+                                              </td>
+                                              <td className="px-3 py-2 text-right text-primary/80">
+                                                {formatIdr(item.unit_price)}
+                                                {unitName && <span className="block text-[10px] text-primary/50">/{unitName}</span>}
+                                              </td>
+                                              <td className="px-3 py-2 text-right font-bold text-primary">
+                                                {formatIdr(item.subtotal)}
+                                              </td>
+                                            </tr>
+                                          );
+                                        })}
+                                      </tbody>
+                                      <tfoot className="border-t border-secondary/20 bg-secondary/5 font-bold">
+                                        <tr>
+                                          <td colSpan={4} className="px-3 py-2 text-right text-primary">
+                                            Total Nominal Pengeluaran:
+                                          </td>
+                                          <td className="px-3 py-2 text-right text-primary">
+                                            {formatIdr(e.amount)}
+                                          </td>
+                                        </tr>
+                                      </tfoot>
+                                    </table>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </tbody>

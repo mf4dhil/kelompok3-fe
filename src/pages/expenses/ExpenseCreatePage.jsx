@@ -106,11 +106,13 @@ export default function ExpenseCreatePage() {
             className="w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-tertiary"
           >
             <option value="">Pilih kategori pengeluaran</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
+            {categories
+              .filter((cat) => cat.name?.toLowerCase() !== 'bahan baku')
+              .map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
           </select>
           {categories.length === 0 && (
             <p className="text-xs text-amber-600 mt-1">

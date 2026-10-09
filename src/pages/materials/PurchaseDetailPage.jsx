@@ -119,33 +119,56 @@ export default function PurchaseDetailPage() {
               <tr>
                 <th className="px-6 py-3 w-16">No</th>
                 <th className="px-6 py-3">Bahan</th>
-                <th className="px-6 py-3 text-center">Qty</th>
+                <th className="px-6 py-3 text-center">Qty Pembelian</th>
+                <th className="px-6 py-3 text-center">Masuk Stok (Dasar)</th>
                 <th className="px-6 py-3 text-right">Harga Satuan</th>
                 <th className="px-6 py-3 text-right">Subtotal</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-secondary/10">
-              {items.map((item, index) => (
-                <tr key={item.id || index} className="hover:bg-quaternary/50 transition">
-                  <td className="px-6 py-4 text-primary/70">{index + 1}</td>
-                  <td className="px-6 py-4 font-medium text-primary">
-                    {item.material?.name || `Material #${item.material_id}`}
-                  </td>
-                  <td className="px-6 py-4 text-center text-primary/80">
-                    {Number(item.quantity)} {item.material?.unit || ''}
-                  </td>
-                  <td className="px-6 py-4 text-right text-primary/80">
-                    {formatPrice(item.unit_price)}
-                  </td>
-                  <td className="px-6 py-4 text-right font-semibold text-primary">
-                    {formatPrice(item.subtotal)}
-                  </td>
-                </tr>
-              ))}
+              {items.map((item, index) => {
+                const baseUnit = item.material?.unit || '';
+                const unitName = item.unit_name || item.unit?.name || baseUnit;
+                const qty = Number(item.quantity);
+                const baseQty = item.base_quantity !== undefined && item.base_quantity !== null
+                  ? Number(item.base_quantity)
+                  : qty;
+                const isDifferent = Math.abs(qty - baseQty) > 0.0001 || unitName !== baseUnit;
+
+                return (
+                  <tr key={item.id || index} className="hover:bg-quaternary/50 transition">
+                    <td className="px-6 py-4 text-primary/70">{index + 1}</td>
+                    <td className="px-6 py-4 font-medium text-primary">
+                      {item.material?.name || `Material #${item.material_id}`}
+                    </td>
+                    <td className="px-6 py-4 text-center font-semibold text-primary">
+                      {qty.toLocaleString('id-ID', { maximumFractionDigits: 4 })} {unitName}
+                    </td>
+                    <td className="px-6 py-4 text-center text-primary/80">
+                      {isDifferent ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                          +{baseQty.toLocaleString('id-ID', { maximumFractionDigits: 4 })} {baseUnit}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-primary/60">
+                          {baseQty.toLocaleString('id-ID', { maximumFractionDigits: 4 })} {baseUnit}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right text-primary/80">
+                      {formatPrice(item.unit_price)}
+                      {unitName && <span className="text-xs text-primary/50 block">per {unitName}</span>}
+                    </td>
+                    <td className="px-6 py-4 text-right font-semibold text-primary">
+                      {formatPrice(item.subtotal)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
             <tfoot>
               <tr className="border-t-2 border-secondary/30 bg-quaternary/50">
-                <td colSpan="4" className="px-6 py-4 text-right font-bold text-primary">
+                <td colSpan="5" className="px-6 py-4 text-right font-bold text-primary">
                   Total
                 </td>
                 <td className="px-6 py-4 text-right font-bold text-primary text-lg">
