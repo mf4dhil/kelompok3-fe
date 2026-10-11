@@ -26,6 +26,7 @@ import MaterialDetailPage from './pages/materials/MaterialDetailPage';
 import PurchasesPage from './pages/materials/PurchasesPage';
 import PurchaseDetailPage from './pages/materials/PurchaseDetailPage';
 import PurchaseCreatePage from './pages/materials/PurchaseCreatePage';
+import RecipesPage from './pages/materials/RecipesPage';
 
 // Expense
 import ExpenseCategoriesPage from './pages/expenses/ExpenseCategoriesPage';
@@ -60,6 +61,7 @@ function App() {
             
             {/* Material & Inventory Routes */}
             <Route path='/materials' Component={MaterialsPage} />
+            <Route path='/materials/recipes' Component={RecipesPage} />
             <Route path='/materials/low-stock' Component={LowStockPage} />
             <Route path='/materials/:id' Component={MaterialDetailPage} />
             <Route path='/material-purchases' Component={PurchasesPage} />

@@ -1,16 +1,6 @@
 import { useState, useEffect } from 'react';
 import { typesService, categoriesService } from '../../services/masterDataService';
-
-// Helper function untuk generate slug dari nama
-const createSlug = (text) => {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-');
-};
+import { createSlug } from '../../utils/slug';
 
 export default function TypesPage() {
   const [items, setItems] = useState([]);

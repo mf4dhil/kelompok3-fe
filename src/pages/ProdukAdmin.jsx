@@ -319,7 +319,7 @@ export default function ProdukAdmin() {
 
   const handleToggleStatus = async (id, currentStatus) => {
     try {
-      await updateProductStatus(id, currentStatus ? 'tidak_aktif' : 'aktif');
+      await updateProductStatus(id, { status: !currentStatus });
       await fetchProducts();
     } catch (error) {
       console.error('Gagal mengubah status:', error);

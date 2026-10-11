@@ -1,16 +1,6 @@
 import { useState, useEffect } from 'react';
 import { categoriesService } from '../../services/masterDataService';
-
-// Helper generator slug
-const createSlug = (text) => {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-');
-};
+import { createSlug } from '../../utils/slug';
 
 export default function CategoriesPage() {
   const [items, setItems] = useState([]);

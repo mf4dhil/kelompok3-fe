@@ -1,168 +1,27 @@
-import api from './api';
+import api from "./api";
+import { createCrudService, withServiceErrorHandling } from "./serviceUtils";
 
-const handleError = (error) => {
-  const message = error.response?.data?.message || error.message || 'Terjadi kesalahan';
-  throw new Error(message);
-};
+const materials = createCrudService("/materials", { messageKey: "message" });
+const request = (promise) => withServiceErrorHandling(promise, "message");
 
-// Material Master (CRUD)
 export const materialService = {
-  getAll: async (params = {}) => {
-    try {
-      const { data } = await api.get('/materials', { params });
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  getById: async (id) => {
-    try {
-      const { data } = await api.get(`/materials/${id}`);
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  create: async (payload) => {
-    try {
-      const { data } = await api.post('/materials', payload);
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  update: async (id, payload) => {
-    try {
-      const { data } = await api.patch(`/materials/${id}`, payload);
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  delete: async (id) => {
-    try {
-      const { data } = await api.delete(`/materials/${id}`);
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  // Stock & Transactions
-  getStock: async (id) => {
-    try {
-      const { data } = await api.get(`/materials/${id}/stock`);
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  getTransactions: async (id, params = {}) => {
-    try {
-      const { data } = await api.get(`/materials/${id}/transactions`, { params });
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  getLowStock: async (params = {}) => {
-    try {
-      const { data } = await api.get('/materials/low-stock', { params });
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  // Usage & Adjustment
-  recordUsage: async (id, payload) => {
-    try {
-      const { data } = await api.post(`/materials/${id}/usage`, payload);
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  recordAdjustment: async (id, payload) => {
-    try {
-      const { data } = await api.post(`/materials/${id}/adjustment`, payload);
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  // Units
-  getUnits: async (id) => {
-    try {
-      const { data } = await api.get(`/materials/${id}/units`);
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  createUnit: async (id, payload) => {
-    try {
-      const { data } = await api.post(`/materials/${id}/units`, payload);
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  updateUnit: async (id, unitId, payload) => {
-    try {
-      const { data } = await api.patch(`/materials/${id}/units/${unitId}`, payload);
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  deleteUnit: async (id, unitId) => {
-    try {
-      const { data } = await api.delete(`/materials/${id}/units/${unitId}`);
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
+  ...materials,
+  getStock: (id) => request(api.get(`/materials/${id}/stock`)),
+  getTransactions: (id, params = {}) =>
+    request(api.get(`/materials/${id}/transactions`, { params })),
+  getLowStock: (params = {}) => request(api.get("/materials/low-stock", { params })),
+  recordUsage: (id, payload) => request(api.post(`/materials/${id}/usage`, payload)),
+  recordAdjustment: (id, payload) =>
+    request(api.post(`/materials/${id}/adjustment`, payload)),
+  getUnits: (id) => request(api.get(`/materials/${id}/units`)),
+  createUnit: (id, payload) => request(api.post(`/materials/${id}/units`, payload)),
+  updateUnit: (id, unitId, payload) =>
+    request(api.patch(`/materials/${id}/units/${unitId}`, payload)),
+  deleteUnit: (id, unitId) => request(api.delete(`/materials/${id}/units/${unitId}`)),
 };
 
-// Material Purchases
 export const purchaseService = {
-  getAll: async (params = {}) => {
-    try {
-      const { data } = await api.get('/material-purchases', { params });
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  getById: async (id) => {
-    try {
-      const { data } = await api.get(`/material-purchases/${id}`);
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
-
-  create: async (payload) => {
-    try {
-      const { data } = await api.post('/material-purchases', payload);
-      return data;
-    } catch (error) {
-      return handleError(error);
-    }
-  },
+  getAll: (params = {}) => request(api.get("/material-purchases", { params })),
+  getById: (id) => request(api.get(`/material-purchases/${id}`)),
+  create: (payload) => request(api.post("/material-purchases", payload)),
 };

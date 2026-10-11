@@ -116,6 +116,11 @@ function Sidebar({ isOpen, onClose }) {
             </Link>
           </li>
           <li>
+            <Link to="/materials/recipes" onClick={onClose} className={menuClass("/materials/recipes")}>
+              Resep & Pemakaian Bahan
+            </Link>
+          </li>
+          <li>
             <Link to="/materials/low-stock" onClick={onClose} className={menuClass("/materials/low-stock")}>
               Stok Rendah
             </Link>
