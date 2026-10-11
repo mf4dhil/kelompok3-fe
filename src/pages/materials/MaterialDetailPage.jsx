@@ -531,7 +531,7 @@ export default function MaterialDetailPage() {
                 <button
                   type="button"
                   onClick={() => setIsUnitModalOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-secondary/25 text-sm font-medium hover:bg-secondary/10 transition"
+                  className="px-4 py-2 rounded-lg border border-secondary/25 text-sm text-primary/70 font-medium hover:bg-secondary/10 transition"
                 >
                   Batal
                 </button>
@@ -590,7 +590,7 @@ export default function MaterialDetailPage() {
                 <button
                   type="button"
                   onClick={() => setIsUsageModalOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-secondary/25 text-sm font-medium hover:bg-secondary/10 transition"
+                  className="px-4 py-2 rounded-lg border border-secondary/25 text-sm text-primary/70 font-medium hover:bg-secondary/10 transition"
                 >
                   Batal
                 </button>
@@ -659,7 +659,7 @@ export default function MaterialDetailPage() {
                 <button
                   type="button"
                   onClick={() => setIsAdjustModalOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-secondary/25 text-sm font-medium hover:bg-secondary/10 transition"
+                  className="px-4 py-2 rounded-lg border border-secondary/25 text-sm text-primary/70 font-medium hover:bg-secondary/10 transition"
                 >
                   Batal
                 </button>
