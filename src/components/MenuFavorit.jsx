@@ -47,11 +47,13 @@
 
 import { useEffect, useState } from "react";
 import { getCustomerProducts } from "../services/productService";
+import { useNavigate } from "react-router-dom";
 
 export default function MenuFavorit() {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -153,15 +155,13 @@ export default function MenuFavorit() {
                         : "Harga belum tersedia"}
                     </span>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        console.log("Detail produk:", item);
-                      }}
-                      className="text-xs font-semibold px-2 py-1 bg-tertiary/20 text-tertiary rounded"
-                    >
-                      Detail
-                    </button>
+                   <button
+                    type="button"
+                    onClick={() => navigate(`/products/${item.id}`)}
+                    className="text-xs font-semibold px-3 py-2 bg-tertiary/20 text-tertiary rounded hover:bg-tertiary hover:text-white transition"
+                  >
+                    Detail
+                  </button>
                   </div>
                 </div>
               );

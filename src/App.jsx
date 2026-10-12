@@ -33,6 +33,8 @@ import ExpenseCategoriesPage from './pages/expenses/ExpenseCategoriesPage';
 import ExpensesPage from './pages/expenses/ExpensesPage';
 import ExpenseCreatePage from './pages/expenses/ExpenseCreatePage';
 import ExpenseDetailPage from './pages/expenses/ExpenseDetailPage';
+import ProductDetail from './pages/ProductDetail';
+import Order from './pages/Order';
 
 function App() {
   return (
@@ -78,6 +80,8 @@ function App() {
         
         <Route path='/produk' Component={Produk} />
         <Route path='/login' Component={Login} />
+        <Route path='/products/:id' element={<ProductDetail />} />
+        <Route path='/orders' element={<Order />} />
       </Routes>
     </BrowserRouter>
   );
