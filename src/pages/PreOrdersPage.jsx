@@ -79,7 +79,7 @@ export default function PreOrdersPage() {
       setOrders(list);
       if (!Array.isArray(res)) setPageInfo({ currentPage: res.currentPage || page, totalPages: res.totalPages || 1, totalItems: res.totalItems || list.length });
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
@@ -257,7 +257,7 @@ export default function PreOrdersPage() {
       setSuccess('Status order berhasil diperbarui');
       fetchOrders();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 
@@ -495,7 +495,7 @@ export default function PreOrdersPage() {
                         <option value='processing'>processing</option>
                         <option value='ready'>ready</option>
                         <option value='completed'>completed</option>
-                        <option value='cancelled'>cancelled</option>
+                        <option value='cancelled' disabled={['processing', 'ready', 'completed'].includes(order.status)}>cancelled</option>
                       </select>
                     </td>
                     <td className='px-5 py-4'>
