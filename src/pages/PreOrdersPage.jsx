@@ -4,6 +4,8 @@ import { rekeningsService } from '../services/masterDataService';
 import { getProducts } from '../services/productService';
 import api from '../services/api';
 
+const PAGE_SIZE = 20;
+
 export default function PreOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -17,6 +19,10 @@ export default function PreOrdersPage() {
   // Filters
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageInfo, setPageInfo] = useState({ currentPage: 1, totalPages: 1, totalItems: 0 });
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
 
   // Modals
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -61,14 +67,17 @@ export default function PreOrdersPage() {
     setError('');
     try {
       const params = {};
+      params.page = page;
+      params.limit = PAGE_SIZE;
+      if (search) params.search = search;
       if (statusFilter) params.status = statusFilter;
       if (paymentFilter) params.payment_status = paymentFilter;
 
       const res = await ordersService.getAll(params);
       // Handle pagination or array response
       const list = Array.isArray(res) ? res : res.data || res.orders || [];
-      console.log(list);
       setOrders(list);
+      if (!Array.isArray(res)) setPageInfo({ currentPage: res.currentPage || page, totalPages: res.totalPages || 1, totalItems: res.totalItems || list.length });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -90,7 +99,7 @@ export default function PreOrdersPage() {
   useEffect(() => {
     fetchOrders();
     fetchSupportingData();
-  }, [statusFilter, paymentFilter]);
+  }, [statusFilter, paymentFilter, page, search]);
 
   // Handle Create Order Form
   const handleAddItem = () => {
@@ -410,9 +419,13 @@ export default function PreOrdersPage() {
 
       {/* Filter Bar */}
       <div className='bg-white p-4 rounded-xl border border-secondary/20 flex flex-wrap gap-4 items-center shadow-sm'>
+        <form className='flex flex-1 min-w-64 gap-2' onSubmit={(event) => { event.preventDefault(); setPage(1); setSearch(searchInput.trim()); }}>
+          <input value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder='Cari nomor PO, nama, atau telepon' className='min-w-0 flex-1 bg-secondary/10 border border-secondary/25 rounded-lg px-3 py-1.5 text-sm focus:outline-none' />
+          <button type='submit' className='px-4 py-1.5 bg-secondary text-white rounded-lg text-sm font-semibold'>Cari</button>
+        </form>
         <div>
           <label className='block text-xs font-medium text-primary/70 mb-1'>Status Order</label>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className='bg-secondary/10 border border-secondary/25 rounded-lg px-3 py-1.5 text-sm text-primary focus:outline-none'>
+          <select value={statusFilter} onChange={(e) => { setPage(1); setStatusFilter(e.target.value); }} className='bg-secondary/10 border border-secondary/25 rounded-lg px-3 py-1.5 text-sm text-primary focus:outline-none'>
             <option value=''>Semua Status</option>
             <option value='pending'>Pending</option>
             <option value='processing'>Processing</option>
@@ -423,7 +436,7 @@ export default function PreOrdersPage() {
         </div>
         <div>
           <label className='block text-xs font-medium text-primary/70 mb-1'>Status Pembayaran</label>
-          <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)} className='bg-secondary/10 border border-secondary/25 rounded-lg px-3 py-1.5 text-sm text-primary focus:outline-none'>
+          <select value={paymentFilter} onChange={(e) => { setPage(1); setPaymentFilter(e.target.value); }} className='bg-secondary/10 border border-secondary/25 rounded-lg px-3 py-1.5 text-sm text-primary focus:outline-none'>
             <option value=''>Semua Pembayaran</option>
             <option value='unpaid'>Unpaid</option>
             <option value='partial'>Partial</option>
@@ -431,6 +444,15 @@ export default function PreOrdersPage() {
           </select>
         </div>
       </div>
+
+      {!loading && pageInfo.totalItems > 0 && <div className='flex items-center justify-between text-sm text-primary/65'>
+        <span>Menampilkan {(pageInfo.currentPage - 1) * PAGE_SIZE + 1}–{Math.min(pageInfo.currentPage * PAGE_SIZE, pageInfo.totalItems)} dari {pageInfo.totalItems} PO</span>
+        <div className='flex items-center gap-3'>
+          <button type='button' onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page <= 1} className='rounded-lg border px-3 py-1.5 disabled:opacity-40'>Sebelumnya</button>
+          <span>Halaman {pageInfo.currentPage} dari {pageInfo.totalPages}</span>
+          <button type='button' onClick={() => setPage((current) => Math.min(pageInfo.totalPages, current + 1))} disabled={page >= pageInfo.totalPages} className='rounded-lg border px-3 py-1.5 disabled:opacity-40'>Selanjutnya</button>
+        </div>
+      </div>}
 
       {/* Orders Table */}
       <div className='bg-white rounded-xl border border-secondary/20 overflow-hidden shadow-sm'>
@@ -457,7 +479,7 @@ export default function PreOrdersPage() {
               <tbody className='divide-y divide-secondary/10'>
                 {orders.map((order, index) => (
                   <tr key={order.id} className='hover:bg-quaternary/50 transition'>
-                    <td className='px-5 py-4 font-mono text-xs font-bold text-primary'>{index + 1}</td>
+                    <td className='px-5 py-4 font-mono text-xs font-bold text-primary'>{(pageInfo.currentPage - 1) * PAGE_SIZE + index + 1}</td>
                     <td className='px-5 py-4 font-mono text-xs font-bold text-primary'>{order.order_number}</td>
                     <td className='px-5 py-4 font-medium text-primary'>{order.Customer?.name || order.customer?.name || '-'}</td>
                     <td className='px-5 py-4 font-medium text-primary text-wrap max-w-12 overflow-hidden '>{order.Customer?.address || order.customer?.address}</td>

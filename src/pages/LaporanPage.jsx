@@ -23,6 +23,8 @@ export default function LaporanPage() {
   const [updatingPaymentId, setUpdatingPaymentId] = useState(null);
   const [page, setPage] = useState(1);
   const [pageInfo, setPageInfo] = useState({ currentPage: 1, totalPages: 1, totalItems: 0 });
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
   const [lastUpdated, setLastUpdated] = useState(null);
   const [periodPreset, setPeriodPreset] = useState('all');
   const [exporting, setExporting] = useState(false);
@@ -191,9 +193,10 @@ export default function LaporanPage() {
     return date.toLocaleDateString('id-ID', granularity === 'month' ? { month: 'short', year: 'numeric' } : { day: '2-digit', month: 'short' });
   };
 
-  const filteredPayments = payments;
-  const filteredOrders = orders;
-  const filteredExpenses = expenses;
+  const matchesSearch = (values) => values.some((value) => String(value || '').toLowerCase().includes(search.toLowerCase()));
+  const filteredPayments = payments.filter((item) => matchesSearch([item.order?.order_number, item.id, item.payment_method, item.status]));
+  const filteredOrders = orders.filter((item) => matchesSearch([item.order_number, item.customer?.name, item.Customer?.name, item.customer?.phone, item.Customer?.phone]));
+  const filteredExpenses = expenses.filter((item) => matchesSearch([item.description, item.category?.name, item.id]));
   const paymentStats = {
     totalCount: summary?.payments?.totalCount || 0,
     totalNominal: summary?.payments?.totalAmount || 0,
@@ -552,6 +555,11 @@ export default function LaporanPage() {
           <span className='w-full text-xs leading-relaxed text-primary/50 sm:ml-auto sm:w-auto sm:max-w-md sm:text-right'>Tanggal pembayaran memakai tanggal verifikasi; PO memakai tanggal order; pengeluaran memakai tanggal pengeluaran.</span>
         </div>
         <p className='text-xs text-primary/50'>Kartu ringkasan mencakup seluruh data pada periode; filter status dan metode hanya menyaring tabel dan file ekspor.</p>
+
+        <form className='flex max-w-xl gap-2' onSubmit={(event) => { event.preventDefault(); setSearch(searchInput.trim()); setPage(1); }}>
+          <input value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder={activeTab === 'orders' ? 'Cari nomor PO atau pelanggan' : activeTab === 'payments' ? 'Cari nomor PO atau metode pembayaran' : 'Cari deskripsi atau kategori pengeluaran'} className='min-w-0 flex-1 rounded-xl border border-secondary/20 bg-secondary/10 px-3 py-2 text-sm focus:outline-none focus:border-secondary' />
+          <button type='submit' className='rounded-xl bg-secondary px-4 py-2 text-sm font-semibold text-white'>Cari</button>
+        </form>
 
         <div className='grid min-w-0 grid-cols-1 gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4'>
           {activeTab === 'payments' ? (

@@ -4,6 +4,7 @@ import Footer from '../components/Footer';
 
 export default function Produk() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   const products = [
@@ -127,18 +128,19 @@ export default function Produk() {
 
         {/* Search & Filter */}
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
+          <form className="relative flex flex-1 gap-2" onSubmit={(event) => { event.preventDefault(); setSearchQuery(searchInput.trim()); }}>
             <input
               type="text"
               placeholder="Cari kue..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="w-full bg-white border border-secondary/30 rounded-xl px-4 py-3 pl-11 
                 focus:outline-none focus:ring-2 focus:ring-tertiary focus:border-transparent 
                 text-primary placeholder-primary/50"
             />
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/50">🔍</span>
-          </div>
+            <button type="submit" className="rounded-xl bg-secondary px-5 py-3 text-sm font-semibold text-white hover:bg-secondary/90">Cari</button>
+          </form>
           
           <div className="flex gap-2">
             {categories.map(cat => (
