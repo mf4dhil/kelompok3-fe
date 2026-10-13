@@ -34,9 +34,14 @@ import ExpensesPage from './pages/expenses/ExpensesPage';
 import ExpenseCreatePage from './pages/expenses/ExpenseCreatePage';
 import ExpenseDetailPage from './pages/expenses/ExpenseDetailPage';
 
+//..hghjj
+import { CartProvider } from './context/CartContext';
+import Keranjang from './pages/Keranjang';
+
 function App() {
   return (
     <BrowserRouter>
+    <CartProvider>
       <Routes>
         <Route path='/' element={<HomePage />} />
         <Route element={<ProtectedRoute requiredRole='admin' />}>
@@ -78,7 +83,9 @@ function App() {
         
         <Route path='/produk' Component={Produk} />
         <Route path='/login' Component={Login} />
+        <Route path="/keranjang" element={<Keranjang/>} />
       </Routes>
+      </CartProvider>
     </BrowserRouter>
   );
 }

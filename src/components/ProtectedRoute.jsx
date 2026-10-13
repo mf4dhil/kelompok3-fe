@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { getMe } from '../services/authService';
 
@@ -28,7 +28,7 @@ export default function ProtectedRoute({ requiredRole }) {
         } else {
           setAuthorized(false);
         }
-      } catch (err) {
+      } catch  {
         // Jika getMe gagal (biasanya cookie tidak kirim), cek localStorage token
         const token = localStorage.getItem('token');
         if (token && requiredRole) {
