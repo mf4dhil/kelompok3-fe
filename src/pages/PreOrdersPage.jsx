@@ -751,7 +751,7 @@ export default function PreOrdersPage() {
                       >
                         <option value='pending' disabled={order.status !== 'pending'}>pending</option>
                         <option value='confirmed' disabled={order.status !== 'pending'}>confirmed</option>
-                        <option value='processing' disabled={order.status !== 'confirmed' || (order.payment_status === 'unpaid' && order.rekening_id)}>processing</option>
+                        <option value='processing' disabled={order.status !== 'confirmed' || (order.payment_status === 'unpaid' && (order.payment_method === 'ipaymu' || order.rekening_id))}>processing</option>
                         <option value='ready' disabled={order.status !== 'processing'}>ready</option>
                         <option value='completed' disabled={order.status !== 'ready' || order.payment_status !== 'paid'}>completed</option>
                         <option value='cancelled' disabled={!['pending', 'confirmed'].includes(order.status)}>cancelled</option>
@@ -776,7 +776,7 @@ export default function PreOrdersPage() {
                         onClick={() => {
                           setPaymentForm({
                             id: order.id,
-                            payment_method: order.payment_method || 'cash',
+                            payment_method: order.payment_method === 'ipaymu' ? 'cash' : (order.payment_method || 'cash'),
                             rekening_id: order.rekening_id || '',
                             payment_proof: order.payment_proof || '',
                             payment_option: order.payment_status === 'partial' ? 'full' : 'dp',

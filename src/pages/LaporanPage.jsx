@@ -226,6 +226,7 @@ export default function LaporanPage() {
   };
 
   const getPaymentStatusLabel = (status) => ({ verified: 'Terverifikasi', rejected: 'Ditolak', pending: 'Menunggu' }[status] || status || 'Menunggu');
+  const getPaymentMethodLabel = (method) => ({ cash: 'Tunai / Cash', transfer: 'Transfer Bank', ipaymu: 'iPaymu' }[String(method || '').toLowerCase()] || method || '—');
   const getPaymentTypeLabel = (type) => ({
     dp: 'DP / Uang Muka',
     partial: 'DP / Uang Muka',
@@ -313,7 +314,7 @@ export default function LaporanPage() {
               </span>
             </div>
             <p className='text-2xl font-bold text-primary'>{paymentStats.totalCount} Transaksi</p>
-            <p className='text-xs text-primary/50 mt-1'>Semua metode (Cash & Transfer)</p>
+            <p className='text-xs text-primary/50 mt-1'>Tunai, transfer manual, dan iPaymu</p>
           </div>
 
           <div className='bg-white p-5 rounded-2xl border border-secondary/20 shadow-sm'>
@@ -593,6 +594,7 @@ export default function LaporanPage() {
                   <option value=''>Semua Metode</option>
                   <option value='cash'>Tunai / Cash</option>
                   <option value='transfer'>Transfer Bank</option>
+                  <option value='ipaymu'>iPaymu</option>
                 </select>
               </div>
             </>
@@ -710,7 +712,7 @@ export default function LaporanPage() {
                           </td>
                           <td className='px-5 py-4 font-bold text-primary'>{formatIdr(e.amount)}</td>
                           <td className='px-5 py-4'>
-                            <span className='capitalize font-medium block text-primary'>{String(e.payment_method).toLowerCase() === 'transfer' ? 'Transfer' : 'Tunai'}</span>
+                            <span className='font-medium block text-primary'>{getPaymentMethodLabel(e.payment_method)}</span>
                           </td>
                           <td className='px-5 py-4 text-center'>
                             {purchase && (
@@ -827,7 +829,7 @@ export default function LaporanPage() {
                           <span className='text-xs text-primary/60'>Total Order: {formatIdr(p.order?.total_amount)}</span>
                         </td>
                         <td className='px-5 py-4'>
-                          <span className='capitalize font-medium block text-primary'>{p.payment_method === 'transfer' ? 'Transfer Bank' : 'Tunai / Cash'}</span>
+                          <span className='font-medium block text-primary'>{getPaymentMethodLabel(p.payment_method)}{p.gateway_channel ? ` · ${String(p.gateway_channel).toUpperCase()}` : ''}</span>
                           {p.rekening && (
                             <span className='text-xs text-primary/60 flex items-center gap-1 mt-0.5'>
                               <Building2 className='w-3 h-3' />

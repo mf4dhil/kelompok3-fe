@@ -18,24 +18,10 @@ export default function Checkout() {
   const [order, setOrder] = useState(null);
   const [submittedTotal, setSubmittedTotal] = useState(0);
   const [submittedItems, setSubmittedItems] = useState([]);
-  const [rekenings, setRekenings] = useState([]);
-  const [rekeningsLoading, setRekeningsLoading] = useState(true);
-  const [rekeningsError, setRekeningsError] = useState('');
+  const [paymentStarting, setPaymentStarting] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
   const [existingCustomer, setExistingCustomer] = useState(null);
   const [customerLookup, setCustomerLookup] = useState('');
-
-  useEffect(() => {
-    let active = true;
-    api.get('/rekenings', { params: { is_active: true } })
-      .then((response) => {
-        if (active) setRekenings(Array.isArray(response.data) ? response.data : response.data?.data || []);
-      })
-      .catch((err) => {
-        if (active) setRekeningsError(err.response?.data?.message || 'Daftar rekening belum bisa dimuat.');
-      })
-      .finally(() => { if (active) setRekeningsLoading(false); });
-    return () => { active = false; };
-  }, []);
 
   useEffect(() => {
     const phone = form.phone.trim();
@@ -75,6 +61,26 @@ export default function Checkout() {
     if (name === 'phone') setExistingCustomer(null);
   };
 
+  const startIpaymuPayment = async (currentOrder) => {
+    if (!currentOrder?.order_number) return;
+    setPaymentStarting(true);
+    setPaymentError('');
+    try {
+      const response = await api.post('/payments/ipaymu/session', {
+        order_number: currentOrder.order_number,
+        phone: form.phone,
+        payment_option: 'full',
+      });
+      const checkoutUrl = response.data?.data?.url;
+      if (!checkoutUrl) throw new Error('Tautan pembayaran belum tersedia.');
+      window.location.assign(checkoutUrl);
+    } catch (err) {
+      setPaymentError(err.response?.data?.message || err.message || 'Pembayaran online belum dapat dibuka. Pesanan Anda tetap tersimpan.');
+    } finally {
+      setPaymentStarting(false);
+    }
+  };
+
   const submit = async (event) => {
     event.preventDefault();
     setError('');
@@ -82,10 +88,6 @@ export default function Checkout() {
     if (!/^[0-9+\-\s]{8,15}$/.test(form.phone)) return setError('Masukkan nomor telepon yang valid (8–15 karakter).');
     setSubmitting(true);
     try {
-      if (form.payment_method === 'transfer' && !form.rekening_id) {
-        setError('Pilih rekening tujuan transfer.');
-        return;
-      }
       const customerPayload = {
         name: form.name.trim(),
         phone: form.phone.trim(),
@@ -109,6 +111,7 @@ export default function Checkout() {
       setSubmittedTotal(totalPrice);
       setSubmittedItems(cartItems.map((item) => ({ ...item })));
       clearCart();
+      if (form.payment_method === 'ipaymu') await startIpaymuPayment(created);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Pesanan belum dapat dibuat. Coba lagi.');
     } finally {
@@ -146,16 +149,16 @@ export default function Checkout() {
                 </div>)}
               </div>
               <div className='space-y-2 pt-3'>
-                <p className='flex justify-between gap-3'><strong>Pembayaran</strong><span>{form.payment_method === 'cash' ? 'Tunai' : 'Transfer bank'}</span></p>
-                {form.payment_method === 'transfer' && (() => { const account = rekenings.find((item) => String(item.id) === String(form.rekening_id)); return <p><strong>Rekening:</strong> {account?.bank_name} · {account?.account_number} a.n. {account?.account_name}</p>; })()}
+                <p className='flex justify-between gap-3'><strong>Pembayaran</strong><span>{form.payment_method === 'cash' ? 'Tunai' : 'Online via iPaymu'}</span></p>
                 <p className='flex justify-between gap-3 border-t border-secondary/20 pt-3 text-base'><strong>Total pesanan</strong><strong>{formatRupiah(order.total_amount ?? submittedTotal)}</strong></p>
                 <p className='text-xs font-semibold text-amber-700'>Status pesanan: {order.status === 'pending' ? 'Menunggu konfirmasi admin' : order.status}</p>
               </div>
             </div>
             <div className='no-print mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-left text-sm text-amber-900'>
               <strong>Simpan struk ini sebelum meninggalkan halaman.</strong>
-              <p className='mt-1'>Admin akan mengonfirmasi order setelah menghubungi Anda. {form.payment_method === 'transfer' ? 'Pembayaran transfer harus dicocokkan dengan dana yang masuk ke rekening tujuan sebelum pesanan diproses.' : 'Untuk tunai, order dapat dikonfirmasi lebih dahulu dan pembayaran dicatat saat uang diterima sesuai kesepakatan.'} Pilih “Cetak / Simpan PDF” atau ambil screenshot, dan simpan nomor pesanan untuk tindak lanjut.</p>
+              <p className='mt-1'>Admin akan mengonfirmasi pesanan Anda. {form.payment_method === 'ipaymu' ? 'Pembayaran online diproses melalui iPaymu. Simpan nomor pesanan untuk mengecek status pembayaran dan progres pesanan.' : 'Untuk tunai, pembayaran dicatat admin setelah uang diterima sesuai kesepakatan.'} Pilih “Cetak / Simpan PDF” atau ambil screenshot, dan simpan nomor pesanan untuk tindak lanjut.</p>
             </div>
+            {paymentError && <div role='alert' className='no-print mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-left text-sm text-red-800'><p>{paymentError}</p><button type='button' onClick={() => startIpaymuPayment(order)} disabled={paymentStarting} className='mt-3 rounded-lg bg-secondary px-4 py-2 font-semibold text-white disabled:opacity-60'>{paymentStarting ? 'Menyiapkan pembayaran…' : 'Coba buka pembayaran lagi'}</button></div>}
             <button type='button' onClick={() => window.print()} className='no-print mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 font-semibold text-white transition hover:bg-primary/90'>
               <Printer size={18}/> Cetak / Simpan PDF
             </button>
@@ -230,19 +233,10 @@ export default function Checkout() {
                   </label>
                   <select id='payment_method' name='payment_method' value={form.payment_method} onChange={setField} className='w-full rounded-lg border border-secondary/30 bg-white p-3'>
                     <option value='cash'>Tunai</option>
-                    <option value='transfer' disabled={rekeningsLoading || rekenings.length === 0}>Transfer bank</option>
+                    <option value='ipaymu'>Pembayaran online (iPaymu)</option>
                   </select>
-                  <p className='mt-1 text-xs leading-relaxed text-primary/60'>Pesanan akan menunggu konfirmasi admin. Pembayaran transfer diverifikasi setelah dana masuk ke rekening toko.</p>
+                  <p className='mt-1 text-xs leading-relaxed text-primary/60'>{form.payment_method === 'ipaymu' ? 'Anda akan diarahkan ke halaman pembayaran iPaymu setelah pesanan tercatat.' : 'Pesanan menunggu konfirmasi admin. Pembayaran tunai dicatat setelah uang diterima sesuai kesepakatan.'}</p>
                 </div>
-                {form.payment_method === 'transfer' && <div>
-                  <label className='mb-1 block text-sm font-medium' htmlFor='rekening_id'>Rekening tujuan *</label>
-                  <select id='rekening_id' name='rekening_id' required value={form.rekening_id} onChange={setField} disabled={rekeningsLoading || rekenings.length === 0} className='w-full rounded-lg border border-secondary/30 bg-white p-3'>
-                    <option value=''>{rekeningsLoading ? 'Memuat rekening…' : 'Pilih rekening tujuan'}</option>
-                    {rekenings.map((rekening) => <option key={rekening.id} value={rekening.id}>{rekening.bank_name} · {rekening.account_number} · {rekening.account_name}</option>)}
-                  </select>
-                  {rekeningsError && <p role='alert' className='mt-1 text-xs text-red-600'>{rekeningsError}</p>}
-                  {!rekeningsLoading && rekenings.length === 0 && <p className='mt-1 text-xs text-amber-700'>Belum ada rekening aktif. Pilih tunai atau hubungi toko.</p>}
-                </div>}
                 <div>
                   <label className='mb-1 block text-sm font-medium' htmlFor='notes'>
                     Catatan pesanan
