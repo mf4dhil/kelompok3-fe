@@ -16,7 +16,6 @@ export default function HomePage() {
       <MenuFavorit />
       <ProcessOrder />
       <Testimonial />
-      <PreOrder />
       <Footer />
     </div>
   );

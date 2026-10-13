@@ -23,7 +23,7 @@ export default function Testimonial() {
   ];
 
   return (
-    <section id="tentang" className="py-16 md:py-24 bg-secondary/5 text-primary">
+    <section id="testimoni" className="py-16 md:py-24 bg-secondary/5 text-primary">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-12 tracking-tight">Testimoni Pelanggan</h2>
         <div className="grid md:grid-cols-3 gap-6">

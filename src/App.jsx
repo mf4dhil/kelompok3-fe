@@ -39,6 +39,7 @@ import Order from './pages/Order';
 //..hghjj
 import { CartProvider } from './context/CartContext';
 import Keranjang from './pages/Keranjang';
+import Checkout from './pages/Checkout';
 
 function App() {
   return (
@@ -87,7 +88,8 @@ function App() {
         <Route path='/login' Component={Login} />
         <Route path="/keranjang" element={<Keranjang/>} />
         <Route path='/products/:id' element={<ProductDetail />} />
-        <Route path='/orders' element={<Order />} />
+        <Route path='/orders' element={<Checkout />} />
+        <Route path='/checkout' element={<Checkout />} />
       </Routes>
       </CartProvider>
     </BrowserRouter>

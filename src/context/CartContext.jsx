@@ -25,13 +25,14 @@ export function CartProvider({ children }) {
   // Tambahkan produk ke keranjang
   const addToCart = (product) => {
     setCartItems((currentItems) => {
+      const key = product.variantId ?? product.id;
       const existingItem = currentItems.find(
-        (item) => String(item.id) === String(product.id)
+        (item) => String(item.variantId ?? item.id) === String(key)
       );
 
       if (existingItem) {
         return currentItems.map((item) =>
-          String(item.id) === String(product.id)
+          String(item.variantId ?? item.id) === String(key)
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
@@ -41,6 +42,7 @@ export function CartProvider({ children }) {
         ...currentItems,
         {
           ...product,
+          id: key,
           quantity: 1,
         },
       ];
@@ -53,7 +55,7 @@ export function CartProvider({ children }) {
 
     setCartItems((currentItems) =>
       currentItems.map((item) =>
-        String(item.id) === String(productId)
+        String(item.variantId ?? item.id) === String(productId)
           ? { ...item, quantity }
           : item
       )
@@ -64,7 +66,7 @@ export function CartProvider({ children }) {
   const removeFromCart = (productId) => {
     setCartItems((currentItems) =>
       currentItems.filter(
-        (item) => String(item.id) !== String(productId)
+        (item) => String(item.variantId ?? item.id) !== String(productId)
       )
     );
   };

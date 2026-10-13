@@ -169,7 +169,7 @@ export default function Keranjang() {
 
               <button
                 type="button"
-                onClick={() => navigate('/#pesan')}
+              onClick={() => navigate('/checkout')}
                 className="mt-6 w-full rounded-lg bg-tertiary px-4 py-3 font-semibold text-primary transition hover:bg-tertiary/90"
               >
                 Lanjut ke Form Pesanan

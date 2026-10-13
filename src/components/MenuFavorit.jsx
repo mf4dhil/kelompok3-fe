@@ -1,57 +1,57 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import ProductCard from './menu/ProductCard';
-import { getCustomerProductList } from '../services/productService';
+// import { useEffect, useState } from 'react';
+// import { Link } from 'react-router-dom';
+// import ProductCard from './menu/ProductCard';
+// import { getCustomerProductList } from '../services/productService';
 
-export default function MenuFavorit() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+// export default function MenuFavorit() {
+//   const [items, setItems] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const list = await getCustomerProductList();
-        setItems(list.slice(0, 6));
-      } catch {
-        setError('Menu belum bisa dimuat. Coba lagi nanti.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
+//   useEffect(() => {
+//     const fetchProducts = async () => {
+//       try {
+//         const list = await getCustomerProductList();
+//         setItems(list.slice(0, 6));
+//       } catch {
+//         setError('Menu belum bisa dimuat. Coba lagi nanti.');
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     fetchProducts();
+//   }, []);
 
-  return (
-    <section id="menu" className="py-16 md:py-24 border-b border-secondary/30">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-center text-primary mb-12 tracking-tight">
-          Menu Kue Favorit
-        </h2>
+//   return (
+//     <section id="menu" className="py-16 md:py-24 border-b border-secondary/30">
+//       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+//         <h2 className="text-2xl sm:text-3xl font-bold text-center text-primary mb-12 tracking-tight">
+//           Menu Kue Favorit
+//         </h2>
 
-        {loading && <p className="text-center text-primary/70">Memuat menu...</p>}
-        {error && <p className="text-center text-primary/70">{error}</p>}
+//         {loading && <p className="text-center text-primary/70">Memuat menu...</p>}
+//         {error && <p className="text-center text-primary/70">{error}</p>}
 
-        {!loading && !error && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        )}
+//         {!loading && !error && (
+//           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+//             {items.map((product) => (
+//               <ProductCard key={product.id} product={product} />
+//             ))}
+//           </div>
+//         )}
 
-        <div className="mt-10 text-center">
-          <Link
-            to="/produk"
-            className="inline-block px-6 py-3 text-sm font-semibold rounded-lg border border-secondary text-secondary hover:bg-secondary hover:text-quaternary transition"
-          >
-            Lihat Semua Menu
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
+//         <div className="mt-10 text-center">
+//           <Link
+//             to="/produk"
+//             className="inline-block px-6 py-3 text-sm font-semibold rounded-lg border border-secondary text-secondary hover:bg-secondary hover:text-quaternary transition"
+//           >
+//             Lihat Semua Menu
+//           </Link>
+//         </div>
+//       </div>
+//     </section>
+//   );
+// }
 
 
 // import React from 'react';
@@ -138,7 +138,7 @@ export default function MenuFavorit() {
   return (
     <section
       id="menu"
-      className="py-16 md:py-24 border-b border-secondary/30"
+      className="scroll-mt-20 py-16 md:py-24 border-b border-secondary/30"
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl sm:text-3xl font-bold text-center text-primary mb-12 tracking-tight">
@@ -169,12 +169,13 @@ export default function MenuFavorit() {
               const prices = (item.productvariants || [])
                 .map((variant) => Number(variant.price))
                 .filter(
-                  (price) => Number.isFinite(price) && price >= 0
+                  (price) => Number.isFinite(price) && price > 0
                 );
 
-              const startingPrice = prices.length
+              const minimumPrice = prices.length
                 ? Math.min(...prices)
                 : null;
+              const maximumPrice = prices.length ? Math.max(...prices) : null;
 
               return (
                 <div
@@ -207,8 +208,10 @@ export default function MenuFavorit() {
 
                   <div className="p-4 border-t border-secondary/30 flex items-center justify-between gap-2">
                     <span className="text-sm sm:text-base font-bold text-tertiary">
-                      {startingPrice !== null
-                        ? formatPrice(startingPrice)
+                      {minimumPrice !== null
+                        ? minimumPrice === maximumPrice
+                          ? formatPrice(minimumPrice)
+                          : `${formatPrice(minimumPrice)} – ${formatPrice(maximumPrice)}`
                         : "Harga belum tersedia"}
                     </span>
 

@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function Hero() {
   return (
-    <section id="home" className="py-16 md:py-24 border-b border-secondary/30">
+    <section id="home" className="scroll-mt-20 py-16 md:py-24 border-b border-secondary/30">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Text Info */}

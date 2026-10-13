@@ -2,7 +2,7 @@
 
 export default function ProcessOrder() {
   return (
-    <section id="cara-po" className="py-16 md:py-24 border-b border-secondary/30 bg-secondary/5">
+    <section id="cara-po" className="scroll-mt-20 py-16 md:py-24 border-b border-secondary/30 bg-secondary/5">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl sm:text-3xl font-bold text-center text-primary mb-12 tracking-tight">
           Cara Melakukan Pre-Order

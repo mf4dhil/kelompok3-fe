@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Edit, Delete, Plus, Eye, EyeOff, MoreVertical, ChevronRight, ChevronLeft } from 'lucide-react';
 
 import {
@@ -10,6 +10,8 @@ import {
   addProductVariants,
 } from '../services/productService';
 import { getShapes, getSizes, getFlavors, getTypes } from '../services/masterService';
+import { getProductImageUrl } from '../utils/productImage';
+import { materialService } from '../services/materialService';
 
 // Step constants for variant modal
 const STEPS = {
@@ -43,6 +45,8 @@ export default function ProdukAdmin() {
     description: '',
     type_id: '',
     is_active: true,
+    image: '',
+    imageFile: null,
   });
 
   // Variant modal (multi-step add variants)
@@ -59,6 +63,12 @@ export default function ProdukAdmin() {
   const [sizes, setSizes] = useState([]);
   const [flavors, setFlavors] = useState([]);
   const [types, setTypes] = useState([]);
+  const [materials, setMaterials] = useState([]);
+  const imagePreview = useMemo(() => productForm.imageFile ? URL.createObjectURL(productForm.imageFile) : getProductImageUrl(productForm.image), [productForm.imageFile, productForm.image]);
+
+  useEffect(() => () => {
+    if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
+  }, [imagePreview]);
 
   // Fetch products
   const fetchProducts = async () => {
@@ -76,16 +86,18 @@ export default function ProdukAdmin() {
   // Fetch master data
   const fetchMasterData = async () => {
     try {
-      const [shapesData, sizesData, flavorsData, typesData] = await Promise.all([
+      const [shapesData, sizesData, flavorsData, typesData, materialsData] = await Promise.all([
         getShapes(),
         getSizes(),
         getFlavors(),
         getTypes(),
+        materialService.getAll(),
       ]);
       setShapes(shapesData);
       setSizes(sizesData);
       setFlavors(flavorsData);
       setTypes(typesData);
+      setMaterials((Array.isArray(materialsData) ? materialsData : []).filter((material) => material.is_active !== false));
     } catch (error) {
       console.error('Gagal mengambil data master:', error);
     }
@@ -107,11 +119,13 @@ export default function ProdukAdmin() {
         description: product.description || '',
         type_id: product.type_id || '',
         is_active: product.is_active !== undefined ? product.is_active : true,
+        image: product.image || '',
+        imageFile: null,
       });
     } else {
       setEditingProduct(false);
       setCurrentProductId(null);
-      setProductForm({ name: '', description: '', type_id: '', is_active: true });
+      setProductForm({ name: '', description: '', type_id: '', is_active: true, image: '', imageFile: null });
     }
     setProductModalVisible(true);
   };
@@ -133,12 +147,12 @@ export default function ProdukAdmin() {
     }
 
     try {
-      const payload = {
-        name: productForm.name,
-        description: productForm.description,
-        type_id: parseInt(productForm.type_id),
-        is_active: productForm.is_active,
-      };
+      const payload = new FormData();
+      payload.append('name', productForm.name.trim());
+      payload.append('description', productForm.description);
+      payload.append('type_id', String(parseInt(productForm.type_id)));
+      payload.append('is_active', String(productForm.is_active));
+      if (productForm.imageFile) payload.append('image', productForm.imageFile);
 
       if (editingProduct && currentProductId) {
         await updateProduct(currentProductId, payload);
@@ -204,6 +218,7 @@ export default function ProdukAdmin() {
               flavor_id: flavorId,
               price: 0,
               is_active: true,
+              recipe_items: [],
             });
           }
         }
@@ -225,6 +240,24 @@ export default function ProdukAdmin() {
     );
   };
 
+  const updateVariantRecipe = (variantIndex, itemIndex, key, value) => {
+    setGeneratedVariants((current) => current.map((variant, index) => index === variantIndex
+      ? { ...variant, recipe_items: variant.recipe_items.map((item, ingredientIndex) => ingredientIndex === itemIndex ? { ...item, [key]: value } : item) }
+      : variant));
+  };
+
+  const addVariantRecipeItem = (variantIndex) => {
+    setGeneratedVariants((current) => current.map((variant, index) => index === variantIndex
+      ? { ...variant, recipe_items: [...variant.recipe_items, { material_id: '', quantity: '' }] }
+      : variant));
+  };
+
+  const removeVariantRecipeItem = (variantIndex, itemIndex) => {
+    setGeneratedVariants((current) => current.map((variant, index) => index === variantIndex
+      ? { ...variant, recipe_items: variant.recipe_items.filter((_, ingredientIndex) => ingredientIndex !== itemIndex) }
+      : variant));
+  };
+
   const handleSaveVariants = async () => {
     if (!selectedProductId) {
       alert('Pilih produk terlebih dahulu');
@@ -236,16 +269,28 @@ export default function ProdukAdmin() {
       alert('Minimal satu variant harus aktif');
       return;
     }
+    if (materials.length === 0) {
+      alert('Belum ada bahan aktif. Tambahkan bahan di menu Bahan terlebih dahulu.');
+      return;
+    }
 
     for (const v of activeVariants) {
       if (!v.price || v.price <= 0) {
         alert('Setiap variant aktif harus memiliki harga yang valid');
         return;
       }
+      if (!v.recipe_items?.length || v.recipe_items.some((item) => !item.material_id || !Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0)) {
+        alert(`Lengkapi minimal satu bahan dan takarannya untuk varian ${getShapeName(v.shape_id)} / ${getSizeName(v.size_id)} / ${getFlavorName(v.flavor_id)}.`);
+        return;
+      }
     }
 
     try {
-      await addProductVariants(parseInt(selectedProductId), activeVariants);
+      const payload = activeVariants.map((variant) => ({
+        ...variant,
+        recipe_items: variant.recipe_items.map((item) => ({ material_id: Number(item.material_id), quantity: Number(item.quantity) })),
+      }));
+      await addProductVariants(parseInt(selectedProductId), payload);
       closeVariantModal();
       await fetchProducts();
     } catch (error) {
@@ -415,6 +460,7 @@ export default function ProdukAdmin() {
               <thead className='bg-quaternary'>
                 <tr>
                   <th className='text-left px-5 py-3 text-xs font-semibold text-primary'>No</th>
+                  <th className='text-left px-5 py-3 text-xs font-semibold text-primary'>Foto</th>
                   <th className='text-left px-5 py-3 text-xs font-semibold text-primary'>Nama Produk</th>
                   <th className='text-left px-5 py-3 text-xs font-semibold text-primary'>Tipe</th>
                   <th className='text-left px-5 py-3 text-xs font-semibold text-primary'>Harga Mulai</th>
@@ -425,11 +471,16 @@ export default function ProdukAdmin() {
               </thead>
               <tbody>
                 {products.length === 0 ? (
-                  <tr><td colSpan={7} className='px-5 py-8 text-center text-primary/50'>Belum ada produk</td></tr>
+                  <tr><td colSpan={8} className='px-5 py-8 text-center text-primary/50'>Belum ada produk</td></tr>
                 ) : (
                   products.map((product, index) => (
                     <tr key={product.id} className='border-t border-secondary/10 hover:bg-quaternary/70'>
                       <td className='px-5 py-3 text-sm text-primary'>{index + 1}</td>
+                      <td className='px-5 py-3'>
+                        <div className='flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-quaternary'>
+                          {product.image ? <img src={getProductImageUrl(product.image)} alt={product.name} className='h-full w-full object-cover' /> : <span aria-label='Belum ada foto'>🍰</span>}
+                        </div>
+                      </td>
                       <td className='px-5 py-3 text-sm font-medium text-primary'>{product.name}</td>
                       <td className='px-5 py-3 text-sm text-primary/70'>{getTypeName(product.type_id)}</td>
                       <td className='px-5 py-3 text-sm text-primary/70'>{formatPrice(getProductMinPrice(product))}</td>
@@ -466,7 +517,7 @@ export default function ProdukAdmin() {
 
       {/* ==================== PRODUCT MODAL (Simple Add/Edit) ==================== */}
       <div className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-50 ${productModalVisible ? '' : 'hidden'}`} onClick={(e) => e.target === e.currentTarget && closeProductModal()}>
-        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-2xl shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed top-1/2 left-1/2 max-h-[90vh] -translate-x-1/2 -translate-y-1/2 w-full max-w-lg overflow-y-auto bg-white rounded-2xl shadow-xl" onClick={(e) => e.stopPropagation()}>
           <div className='px-6 pt-6 pb-4 border-b border-secondary/10'>
             <div className='flex items-center justify-between'>
               <h3 className='text-xl font-bold text-primary'>{editingProduct ? 'Edit Produk' : 'Tambah Produk Baru'}</h3>
@@ -474,6 +525,7 @@ export default function ProdukAdmin() {
             </div>
           </div>
           <div className='px-6 py-5 space-y-4'>
+            {detailProduct?.image && <img src={getProductImageUrl(detailProduct.image)} alt={detailProduct.name} className='h-48 w-full rounded-xl object-cover' />}
             <div>
               <label className='block text-sm font-medium text-primary mb-1.5'>Nama Produk <span className='text-red-500'>*</span></label>
               <input
@@ -484,6 +536,22 @@ export default function ProdukAdmin() {
                 className='w-full bg-secondary/10 border border-secondary/25 rounded-lg px-4 py-2.5 text-primary placeholder-primary/40 focus:outline-none focus:ring-2 focus:ring-tertiary focus:border-transparent'
                 autoFocus
               />
+            </div>
+            <div>
+              <label className='block text-sm font-medium text-primary mb-1.5'>Foto Produk</label>
+              <label className='flex cursor-pointer items-center gap-4 rounded-xl border border-dashed border-secondary/40 p-3 hover:bg-quaternary'>
+                <div className='flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-secondary/10'>
+                  {imagePreview ? <img src={imagePreview} alt='Pratinjau foto produk' className='h-full w-full object-cover' /> : <span className='text-2xl'>🍰</span>}
+                </div>
+                <div><span className='block text-sm font-semibold text-primary'>Pilih gambar</span><span className='text-xs text-primary/60'>JPG, PNG, WEBP · Maksimal 5 MB</span></div>
+                <input type='file' accept='image/jpeg,image/png,image/webp' className='sr-only' onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 5 * 1024 * 1024) { alert('Ukuran gambar maksimal 5 MB.'); event.target.value = ''; return; }
+                  setProductForm((current) => ({ ...current, imageFile: file }));
+                }} />
+              </label>
+              {productForm.imageFile && <button type='button' className='mt-2 text-xs font-medium text-red-600' onClick={() => setProductForm((current) => ({ ...current, imageFile: null, image: '' }))}>Hapus gambar pilihan</button>}
             </div>
             <div>
               <label className='block text-sm font-medium text-primary mb-1.5'>Deskripsi</label>
@@ -669,6 +737,7 @@ export default function ProdukAdmin() {
                     Kombinasi variant baru ({generatedVariants.length}):
                   </p>
                 </div>
+                {materials.length === 0 && <p className='mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800'>Belum ada bahan aktif. Tambahkan bahan di menu Bahan terlebih dahulu agar resep varian bisa disimpan.</p>}
                 {generatedVariants.length === 0 ? (
                   <div className='text-center py-8 text-primary/40'>
                     <p>Tidak ada kombinasi baru yang tersedia.</p>
@@ -695,28 +764,61 @@ export default function ProdukAdmin() {
                       </thead>
                       <tbody>
                         {generatedVariants.map((variant, idx) => (
-                          <tr key={`${variant.shape_id}-${variant.size_id}-${variant.flavor_id}-${idx}`} className='border-t border-secondary/10'>
-                            <td className='px-3 py-2'>
-                              <input
-                                type='checkbox'
-                                checked={variant.is_active}
-                                onChange={() => toggleVariantActive(idx)}
-                                className='w-4 h-4 rounded border-secondary/30 text-tertiary focus:ring-tertiary cursor-pointer'
-                              />
-                            </td>
-                            <td className='px-3 py-2 text-primary/80'>{getShapeName(variant.shape_id)}</td>
-                            <td className='px-3 py-2 text-primary/80'>{getSizeName(variant.size_id)}</td>
-                            <td className='px-3 py-2 text-primary/80'>{getFlavorName(variant.flavor_id)}</td>
-                            <td className='px-3 py-2'>
-                              <input
-                                type='number'
-                                value={variant.price || ''}
-                                onChange={e => updateVariantPrice(idx, e.target.value)}
-                                placeholder='0'
-                                className='w-28 bg-secondary/10 border border-secondary/25 rounded px-2 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-tertiary'
-                              />
-                            </td>
-                          </tr>
+                          <React.Fragment key={`${variant.shape_id}-${variant.size_id}-${variant.flavor_id}-${idx}`}>
+                            <tr className='border-t border-secondary/10'>
+                              <td className='px-3 py-2'>
+                                <input
+                                  type='checkbox'
+                                  checked={variant.is_active}
+                                  onChange={() => toggleVariantActive(idx)}
+                                  className='w-4 h-4 rounded border-secondary/30 text-tertiary focus:ring-tertiary cursor-pointer'
+                                />
+                              </td>
+                              <td className='px-3 py-2 text-primary/80'>{getShapeName(variant.shape_id)}</td>
+                              <td className='px-3 py-2 text-primary/80'>{getSizeName(variant.size_id)}</td>
+                              <td className='px-3 py-2 text-primary/80'>{getFlavorName(variant.flavor_id)}</td>
+                              <td className='px-3 py-2'>
+                                <input
+                                  type='number'
+                                  value={variant.price || ''}
+                                  onChange={e => updateVariantPrice(idx, e.target.value)}
+                                  placeholder='0'
+                                  className='w-28 bg-secondary/10 border border-secondary/25 rounded px-2 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-tertiary'
+                                />
+                              </td>
+                            </tr>
+                            {variant.is_active && <tr className='border-t border-secondary/10 bg-quaternary/40'>
+                              <td colSpan={5} className='px-4 py-4'>
+                                <div className='flex flex-wrap items-center justify-between gap-2'>
+                                  <div>
+                                    <p className='text-sm font-semibold text-primary'>Bahan untuk varian ini</p>
+                                    <p className='text-xs text-primary/60'>Takaran untuk membuat satu kue. Semua bahan aktif wajib diisi.</p>
+                                  </div>
+                                  <button type='button' onClick={() => addVariantRecipeItem(idx)} className='inline-flex items-center gap-1 rounded-lg border border-secondary/30 bg-white px-3 py-2 text-xs font-semibold text-primary hover:bg-secondary/10'><Plus className='h-3.5 w-3.5'/>Tambah bahan</button>
+                                </div>
+                                <div className='mt-3 space-y-2'>
+                                  {variant.recipe_items.map((item, itemIdx) => {
+                                    const selectedMaterial = materials.find((material) => String(material.id) === String(item.material_id));
+                                    return <div key={`${idx}-${itemIdx}`} className='grid grid-cols-[minmax(0,1fr)_120px_40px] items-end gap-2'>
+                                      <label className='min-w-0'>
+                                        <span className='mb-1 block text-xs text-primary/70'>Bahan baku</span>
+                                        <select value={item.material_id} onChange={(event) => updateVariantRecipe(idx, itemIdx, 'material_id', event.target.value)} className='w-full rounded-lg border border-secondary/30 bg-white px-2 py-2 text-sm text-primary'>
+                                          <option value=''>Pilih bahan</option>
+                                          {materials.map((material) => <option key={material.id} value={material.id}>{material.name} ({material.unit})</option>)}
+                                        </select>
+                                      </label>
+                                      <label>
+                                        <span className='mb-1 block text-xs text-primary/70'>Takaran{selectedMaterial ? ` (${selectedMaterial.unit})` : ''}</span>
+                                        <input type='number' min='0.001' step='0.001' value={item.quantity} onChange={(event) => updateVariantRecipe(idx, itemIdx, 'quantity', event.target.value)} placeholder='0' className='w-full rounded-lg border border-secondary/30 bg-white px-2 py-2 text-sm text-primary'/>
+                                      </label>
+                                      <button type='button' onClick={() => removeVariantRecipeItem(idx, itemIdx)} aria-label='Hapus bahan' title='Hapus bahan' className='flex h-9 w-10 items-center justify-center rounded-lg text-red-600 hover:bg-red-50'><Delete className='h-4 w-4'/></button>
+                                    </div>;
+                                  })}
+                                  {variant.recipe_items.length === 0 && <p className='rounded-lg border border-dashed border-secondary/30 bg-white p-3 text-xs text-primary/50'>Belum ada bahan. Tambahkan bahan dan takarannya untuk melanjutkan.</p>}
+                                </div>
+                              </td>
+                            </tr>}
+                          </React.Fragment>
                         ))}
                       </tbody>
                     </table>

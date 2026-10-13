@@ -98,31 +98,59 @@
 
 
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 export default function NavbarHome() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { totalItems } = useCart();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (location.pathname !== '/' || !location.hash) return undefined;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(location.hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [location.pathname, location.hash]);
+
+  const goToSection = (id) => (event) => {
+    event.preventDefault();
+    setMobileMenuOpen(false);
+    const hash = `#${id}`;
+    if (location.pathname === '/' && location.hash === hash) {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      navigate({ pathname: '/', hash });
+    }
+  };
+
+  const goHome = (event) => {
+    event.preventDefault();
+    setMobileMenuOpen(false);
+    navigate('/');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-secondary/30 bg-primary/95 backdrop-blur">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
           {/* Logo */}
-          <Link to="/" className="flex shrink-0 items-center gap-2">
+          <Link to="/" onClick={goHome} className="flex shrink-0 items-center gap-2">
             <span className="text-2xl" role="img" aria-label="cake">🍰</span>
             <span className="text-xl font-bold tracking-tight text-quaternary">NIFACake</span>
           </Link>
 
           {/* Navigasi desktop */}
           <nav className="hidden items-center gap-6 text-sm font-medium text-quaternary/80 md:flex">
-            <Link to="/" className="transition hover:text-tertiary">Home</Link>
-            <Link to="/#menu" className="transition hover:text-tertiary">Menu</Link>
-            <Link to="/#cara-po" className="transition hover:text-tertiary">Cara PO</Link>
-            <Link to="/#tentang" className="transition hover:text-tertiary">Tentang</Link>
+            <Link to="/" onClick={goHome} className="transition hover:text-tertiary">Home</Link>
+            <Link to="/#menu" onClick={goToSection('menu')} className="transition hover:text-tertiary">Menu</Link>
+            <Link to="/#cara-po" onClick={goToSection('cara-po')} className="transition hover:text-tertiary">Cara PO</Link>
+            <Link to="/#tentang" onClick={goToSection('tentang')} className="transition hover:text-tertiary">Tentang</Link>
           </nav>
 
           {/* Aksi desktop */}
@@ -142,7 +170,7 @@ export default function NavbarHome() {
             </Link>
 
             <Link
-              to="/#pesan"
+              to="/produk"
               className="inline-flex items-center justify-center rounded-lg bg-tertiary px-4 py-2 text-sm font-semibold text-primary shadow-sm transition hover:bg-tertiary/90"
             >
               PO Now
@@ -204,7 +232,7 @@ export default function NavbarHome() {
         <div className="space-y-2 border-b border-secondary/30 bg-primary px-4 pb-4 pt-2 md:hidden">
           <Link
             to="/"
-            onClick={() => setMobileMenuOpen(false)}
+            onClick={goHome}
             className="block rounded-md px-3 py-2 text-quaternary hover:bg-secondary/20"
           >
             Home
@@ -212,7 +240,7 @@ export default function NavbarHome() {
 
           <Link
             to="/#menu"
-            onClick={() => setMobileMenuOpen(false)}
+            onClick={goToSection('menu')}
             className="block rounded-md px-3 py-2 text-quaternary hover:bg-secondary/20"
           >
             Menu
@@ -220,7 +248,7 @@ export default function NavbarHome() {
 
           <Link
             to="/#cara-po"
-            onClick={() => setMobileMenuOpen(false)}
+            onClick={goToSection('cara-po')}
             className="block rounded-md px-3 py-2 text-quaternary hover:bg-secondary/20"
           >
             Cara PO
@@ -228,15 +256,14 @@ export default function NavbarHome() {
 
           <Link
             to="/#tentang"
-            onClick={() => setMobileMenuOpen(false)}
+            onClick={goToSection('tentang')}
             className="block rounded-md px-3 py-2 text-quaternary hover:bg-secondary/20"
           >
             Tentang
           </Link>
 
           <Link
-            to="/#pesan"
-            onClick={() => setMobileMenuOpen(false)}
+            to="/produk"
             className="block w-full rounded-lg bg-tertiary px-4 py-2 text-center text-sm font-semibold text-primary"
           >
             PO Now

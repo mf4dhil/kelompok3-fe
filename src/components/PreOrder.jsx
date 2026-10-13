@@ -28,7 +28,7 @@ export default function PreOrder() {
   };
 
   return (
-    <section id="pesan" className="py-16 md:py-24 border-b border-secondary/30 bg-secondary/5">
+    <section id="pesan" className="scroll-mt-20 py-16 md:py-24 border-b border-secondary/30 bg-secondary/5">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-secondary/10 border border-secondary/30 rounded-2xl p-8 md:p-10">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-primary mb-6 tracking-tight">

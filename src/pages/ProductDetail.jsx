@@ -3,6 +3,10 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ShoppingBag } from "lucide-react";
 import api from "../services/api";
+import NavbarHome from "../components/NavbarHome";
+import Footer from "../components/Footer";
+import { useCart } from "../context/CartContext";
+import { getProductImageUrl } from "../utils/productImage";
 
 const formatPrice = (price) =>
   new Intl.NumberFormat("id-ID", {
@@ -14,6 +18,7 @@ const formatPrice = (price) =>
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addToCart } = useCart();
 
   const [product, setProduct] = useState(null);
   const [variants, setVariants] = useState([]);
@@ -122,36 +127,16 @@ export default function ProductDetail() {
       return;
     }
 
-    navigate("/orders", {
-      state: {
-        productId: product.id,
-        productName: product.name,
-        variantId: selectedVariant.id,
-        variant: {
-          shape: getRelationName(selectedVariant, [
-            "shape",
-            "Shape",
-          ]),
-          size: getRelationName(selectedVariant, [
-            "size",
-            "Size",
-          ]),
-          flavor: getRelationName(selectedVariant, [
-            "flavor",
-            "Flavor",
-            "Flavors",
-          ]),
-          price: Number(selectedVariant.price),
-        },
-      },
-    });
+    const variantLabel = [
+      getRelationName(selectedVariant, ["shape", "Shape"]),
+      getRelationName(selectedVariant, ["size", "Size"]),
+      getRelationName(selectedVariant, ["flavor", "Flavor", "Flavors"]),
+    ].join(" / ");
+    addToCart({ id: selectedVariant.id, variantId: selectedVariant.id, productId: product.id, name: product.name, variantLabel, price: Number(selectedVariant.price), image: imageUrl });
+    navigate("/keranjang");
   };
 
-  const imageUrl = product?.image
-    ? product.image.startsWith("http")
-      ? product.image
-      : `http://localhost:3000/${product.image.replace(/^\/+/, "")}`
-    : null;
+  const imageUrl = getProductImageUrl(product?.image) || null;
 
   if (loading) {
     return (
@@ -184,8 +169,9 @@ export default function ProductDetail() {
   }
 
   return (
-    <main className="min-h-screen border-b border-secondary/30 bg-white py-16 md:py-24">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen border-b border-secondary/30 bg-white">
+      <NavbarHome />
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -306,11 +292,12 @@ export default function ProductDetail() {
               className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-tertiary/20 px-5 py-3 font-semibold text-tertiary transition hover:bg-tertiary hover:text-white"
             >
               <ShoppingBag size={20} />
-              Pesan Sekarang
+              Tambahkan ke keranjang
             </button>
           </div>
         </div>
       </div>
+      <Footer />
     </main>
   );
 }
