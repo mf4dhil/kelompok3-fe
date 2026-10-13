@@ -27,6 +27,7 @@ export const getCustomerProducts = async () => {
 const mapCustomerProduct = (item) => {
   const variants = item.ProductVariants || item.ProductVariant || item.variants || [];
   const prices = variants.map((variant) => Number(variant.price)).filter((price) => Number.isFinite(price) && price > 0);
+  const flavors = [...new Set(variants.map((variant) => variant.flavor?.name || variant.Flavor?.name).filter(Boolean))];
   const fallbackPrice = Number(item.price);
   if (prices.length === 0 && Number.isFinite(fallbackPrice) && fallbackPrice > 0) prices.push(fallbackPrice);
 
@@ -37,6 +38,7 @@ const mapCustomerProduct = (item) => {
     description: item.description,
     image: getProductImageUrl(item.image),
     priceRange: prices.length ? { min: Math.min(...prices), max: Math.max(...prices) } : null,
+    flavors,
     category: item.Type?.name || '',
     is_active: item.is_active,
   };

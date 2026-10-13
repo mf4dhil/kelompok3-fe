@@ -2,6 +2,7 @@ function OrderTable({ orders }) {
   const getStatusBadge = (status) => {
     const statusMap = {
       pending: { label: 'Menunggu', color: 'bg-yellow-100 text-yellow-700' },
+      confirmed: { label: 'Terkonfirmasi', color: 'bg-teal-100 text-teal-700' },
       processing: { label: 'Diproses', color: 'bg-blue-100 text-blue-700' },
       ready: { label: 'Siap diambil', color: 'bg-green-100 text-green-700' },
       completed: { label: 'Selesai', color: 'bg-green-100 text-green-700' },

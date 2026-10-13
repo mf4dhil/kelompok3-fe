@@ -242,7 +242,7 @@ export default function LaporanPage() {
     }
   };
 
-  const getOrderStatusLabel = (status) => ({ pending: 'Menunggu', processing: 'Diproses', ready: 'Siap Diambil', completed: 'Selesai', cancelled: 'Dibatalkan' }[status] || status);
+  const getOrderStatusLabel = (status) => ({ pending: 'Menunggu', confirmed: 'Terkonfirmasi', processing: 'Diproses', ready: 'Siap Diambil', completed: 'Selesai', cancelled: 'Dibatalkan' }[status] || status);
 
   return (
     <div className='min-w-0 space-y-5 sm:space-y-6'>
@@ -596,6 +596,7 @@ export default function LaporanPage() {
                 <select value={orderStatusFilter} onChange={(e) => { setOrderStatusFilter(e.target.value); setPage(1); }} className='w-full bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-secondary'>
                   <option value=''>Semua Status Pesanan</option>
                   <option value='pending'>Menunggu</option>
+                  <option value='confirmed'>Terkonfirmasi</option>
                   <option value='processing'>Diproses</option>
                   <option value='ready'>Siap diambil</option>
                   <option value='completed'>Selesai</option>

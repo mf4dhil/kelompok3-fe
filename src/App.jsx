@@ -40,6 +40,7 @@ import Order from './pages/Order';
 import { CartProvider } from './context/CartContext';
 import Keranjang from './pages/Keranjang';
 import Checkout from './pages/Checkout';
+import TrackOrderPage from './pages/TrackOrderPage';
 
 function App() {
   return (
@@ -90,6 +91,7 @@ function App() {
         <Route path='/products/:id' element={<ProductDetail />} />
         <Route path='/orders' element={<Checkout />} />
         <Route path='/checkout' element={<Checkout />} />
+        <Route path='/lacak-pesanan' element={<TrackOrderPage />} />
       </Routes>
       </CartProvider>
     </BrowserRouter>

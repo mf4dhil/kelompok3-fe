@@ -1,121 +1,20 @@
-import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, ShoppingBag } from 'lucide-react';
 
 export default function PreOrder() {
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    cakeType: 'Signature Classic',
-    date: '',
-    message: '',
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle form submission
-    alert(`Terima kasih ${formData.name}! Pesanannya berhasil. Kami akan menghubungi ${formData.phone} untuk konfirmasi detail pesanan ${formData.cakeType} pada tanggal ${formData.date}.`);
-    setFormData({
-      name: '',
-      phone: '',
-      cakeType: 'Signature Classic',
-      date: '',
-      message: '',
-    });
-  };
-
   return (
-    <section id="pesan" className="scroll-mt-20 py-16 md:py-24 border-b border-secondary/30 bg-secondary/5">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-secondary/10 border border-secondary/30 rounded-2xl p-8 md:p-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center text-primary mb-6 tracking-tight">
-            Pesan Kue Segera
-          </h2>
-          <form onSubmit={handleSubmit} className="grid gap-6 mt-8">
-            <div>
-              <label className="block text-sm font-medium text-primary/70 mb-2">
-                Nama Lengkap
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="w-full bg-secondary/10 border border-secondary/30 rounded-lg py-3 px-4 text-primary placeholder-secondary/40 focus:outline-none focus:border-tertiary transition"
-                placeholder="Masukkan nama lengkap"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-primary/70 mb-2">
-                Nomor HP
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-                className="w-full bg-secondary/10 border border-secondary/30 rounded-lg py-3 px-4 text-primary placeholder-secondary/40 focus:outline-none focus:border-tertiary transition"
-                placeholder="Masukkan nomor HP"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-primary/70 mb-2">
-                Tipe Kue
-              </label>
-              <select
-                name="cakeType"
-                value={formData.cakeType}
-                onChange={handleChange}
-                required
-                className="w-full bg-secondary/10 border border-secondary/30 rounded-lg py-3 px-4 text-primary placeholder-secondary/40 focus:outline-none focus:border-tertiary transition appearance-none"
-              >
-                <option value="Signature Classic">Signature Classic - Rp 89.000</option>
-                <option value="Rainbow Fondant">Rainbow Fondant - Rp 125.000</option>
-                <option value="Kue Apel">Kue Apel - Rp 65.000</option>
-                <option value="Oreo Cream">Oreo Cream - Rp 72.000</option>
-                <option value="Chocolate Hazelnut">Chocolate Hazelnut - Rp 95.000</option>
-                <option value="Red Velvet">Red Velvet - Rp 88.000</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-primary/70 mb-2">
-                Tanggal Kebutuhan
-              </label>
-              <input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
-                required
-                className="w-full bg-secondary/10 border border-secondary/30 rounded-lg py-3 px-4 text-primary placeholder-secondary/40 focus:outline-none focus:border-tertiary transition"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-primary/70 mb-2">
-                Pesan Khusus (Opsional)
-              </label>
-              <textarea
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                rows={3}
-                className="w-full bg-secondary/10 border border-secondary/30 rounded-lg py-3 px-4 text-primary placeholder-secondary/40 focus:outline-none focus:border-tertiary transition resize-none"
-                placeholder="Catatan khusus untuk kue..."
-              ></textarea>
-            </div>
-            <button
-              type="submit"
-              className="w-full py-3 px-6 text-base font-medium rounded-lg bg-tertiary text-primary hover:bg-tertiary/90 transition shadow-lg shadow-tertiary/20"
-            >
-              Kirim Pesan
-            </button>
-          </form>
+    <section id="pesan" className="scroll-mt-20 border-b border-secondary/30 bg-secondary/5 py-16 md:py-20">
+      <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-tertiary/20 text-secondary">
+          <ShoppingBag size={27} />
         </div>
+        <h2 className="text-2xl font-bold tracking-tight text-primary sm:text-3xl">Siap memilih kue?</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-primary/70 sm:text-base">
+          Jelajahi katalog, pilih varian dan jumlahnya, lalu selesaikan pesanan tanpa perlu membuat akun.
+        </p>
+        <Link to="/produk" className="mt-7 inline-flex items-center gap-2 rounded-lg bg-tertiary px-6 py-3 font-semibold text-primary transition hover:bg-tertiary/90">
+          Buka katalog <ArrowRight size={18} />
+        </Link>
       </div>
     </section>
   );

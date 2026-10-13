@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Printer } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock3, Printer } from 'lucide-react';
 import NavbarHome from '../components/NavbarHome';
 import Footer from '../components/Footer';
 import { useCart } from '../context/CartContext';
@@ -122,11 +122,11 @@ export default function Checkout() {
       <main className='mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8'>
         {order ? (
           <section id='print-receipt' className='mx-auto max-w-xl rounded-2xl border border-secondary/20 bg-white p-6 text-center shadow-sm sm:p-10'>
-            <CheckCircle2 size={54} className='mx-auto text-green-600' />
+            {order.status === 'pending' ? <Clock3 size={54} className='mx-auto text-amber-600' /> : <CheckCircle2 size={54} className='mx-auto text-green-600' />}
             <p className='mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-secondary'>NIFACake · Struk Pesanan</p>
-            <h1 className='mt-2 text-3xl font-bold'>Pesanan diterima!</h1>
+            <h1 className='mt-2 text-3xl font-bold'>{order.status === 'pending' ? 'Pesanan menunggu konfirmasi' : 'Pesanan diterima!'}</h1>
             <p className='mt-3 text-primary/70 no-print'>
-              Terima kasih, {form.name}. Kami akan menghubungi {form.phone} untuk konfirmasi pesanan.
+              Terima kasih, {form.name}. Pesanan Anda sudah tercatat dan menunggu konfirmasi admin. Admin akan menghubungi {form.phone} untuk memastikan order.
             </p>
             <div className='mt-6 rounded-xl border border-secondary/20 bg-white p-4 text-left text-sm sm:p-5'>
               <div className='flex justify-between gap-3 border-b border-secondary/20 pb-3'><strong>Nomor pesanan</strong><span className='font-semibold'>{order.order_number ?? order.id ?? '—'}</span></div>
@@ -149,16 +149,17 @@ export default function Checkout() {
                 <p className='flex justify-between gap-3'><strong>Pembayaran</strong><span>{form.payment_method === 'cash' ? 'Tunai' : 'Transfer bank'}</span></p>
                 {form.payment_method === 'transfer' && (() => { const account = rekenings.find((item) => String(item.id) === String(form.rekening_id)); return <p><strong>Rekening:</strong> {account?.bank_name} · {account?.account_number} a.n. {account?.account_name}</p>; })()}
                 <p className='flex justify-between gap-3 border-t border-secondary/20 pt-3 text-base'><strong>Total pesanan</strong><strong>{formatRupiah(order.total_amount ?? submittedTotal)}</strong></p>
-                <p className='text-xs text-primary/60'>Status: {order.status || 'Menunggu konfirmasi toko'}</p>
+                <p className='text-xs font-semibold text-amber-700'>Status pesanan: {order.status === 'pending' ? 'Menunggu konfirmasi admin' : order.status}</p>
               </div>
             </div>
             <div className='no-print mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-left text-sm text-amber-900'>
               <strong>Simpan struk ini sebelum meninggalkan halaman.</strong>
-              <p className='mt-1'>Pilih “Cetak / Simpan PDF” untuk menyimpan salinan, atau ambil screenshot. Simpan juga nomor pesanan agar mudah ditunjukkan saat pengambilan. Detail pesanan mungkin tidak dapat dibuka kembali setelah halaman ini ditutup.</p>
+              <p className='mt-1'>Admin akan mengonfirmasi order setelah menghubungi Anda. {form.payment_method === 'transfer' ? 'Pembayaran transfer harus dicocokkan dengan dana yang masuk ke rekening tujuan sebelum pesanan diproses.' : 'Untuk tunai, order dapat dikonfirmasi lebih dahulu dan pembayaran dicatat saat uang diterima sesuai kesepakatan.'} Pilih “Cetak / Simpan PDF” atau ambil screenshot, dan simpan nomor pesanan untuk tindak lanjut.</p>
             </div>
             <button type='button' onClick={() => window.print()} className='no-print mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 font-semibold text-white transition hover:bg-primary/90'>
               <Printer size={18}/> Cetak / Simpan PDF
             </button>
+            <Link to={`/lacak-pesanan?nomor=${encodeURIComponent(order.order_number || '')}`} className='no-print mt-3 inline-flex w-full justify-center rounded-lg border border-secondary/30 px-5 py-3 font-semibold text-secondary transition hover:bg-secondary/5'>Lacak progres pesanan</Link>
             <Link to='/produk' className='no-print mt-3 inline-flex rounded-lg border border-secondary/30 px-5 py-3 font-semibold'>
               Lihat menu lainnya
             </Link>
@@ -231,6 +232,7 @@ export default function Checkout() {
                     <option value='cash'>Tunai</option>
                     <option value='transfer' disabled={rekeningsLoading || rekenings.length === 0}>Transfer bank</option>
                   </select>
+                  <p className='mt-1 text-xs leading-relaxed text-primary/60'>Pesanan akan menunggu konfirmasi admin. Pembayaran transfer diverifikasi setelah dana masuk ke rekening toko.</p>
                 </div>
                 {form.payment_method === 'transfer' && <div>
                   <label className='mb-1 block text-sm font-medium' htmlFor='rekening_id'>Rekening tujuan *</label>

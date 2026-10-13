@@ -32,6 +32,34 @@ select option {
   color: var(--color-primary);
 }
 
+@keyframes flavor-marquee-forward {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes flavor-marquee-reverse {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+
+.marquee-row {
+  animation: flavor-marquee-forward 34s linear infinite;
+}
+
+.marquee-row[data-reverse='true'] {
+  animation-name: flavor-marquee-reverse;
+  animation-duration: 38s;
+}
+
+.marquee-row:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+}
+
 @media print {
   @page {
     margin: 12mm;

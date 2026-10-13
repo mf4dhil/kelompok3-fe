@@ -30,6 +30,7 @@ export default function PreOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState(null);
   const [newOrder, setNewOrder] = useState({
     // Customer data (manual entry)
     customer_name: '',
@@ -146,6 +147,40 @@ export default function PreOrdersPage() {
     }
   };
 
+  const handleEditOrder = async (order) => {
+    setError('');
+    setSuccess('');
+    try {
+      const detail = await ordersService.getById(order.id);
+      const record = detail.data || detail;
+      const customer = record.Customer || record.customer || {};
+      const items = record.OrderItems || record.order_items || record.orderItems || [];
+      setEditingOrderId(record.id);
+      setNewOrder({
+        customer_name: customer.name || '',
+        customer_phone: customer.phone || '',
+        customer_email: customer.email || '',
+        customer_address: customer.address || '',
+        pickup_date: String(record.pickup_date || '').slice(0, 10),
+        notes: record.notes || '',
+        payment_method: record.rekening_id ? 'transfer' : 'cash',
+        payment_option: 'full',
+        rekening_id: record.rekening_id || '',
+        proof_file: null,
+        proof_preview: '',
+        payment_proof: '',
+        items: items.map((item) => ({
+          product_variant_id: String(item.product_variant_id || item.ProductVariant?.id || item.productvariant?.id || ''),
+          quantity: Number(item.quantity || 1),
+          notes: item.notes || '',
+        })),
+      });
+      setIsCreateModalOpen(true);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Detail order gagal dimuat.');
+    }
+  };
+
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -154,6 +189,27 @@ export default function PreOrdersPage() {
       // Validasi input di sisi client dulu
       if (newOrder.items.filter((item) => item.product_variant_id).length === 0) {
         setError('Pilih minimal satu varian kue');
+        return;
+      }
+
+      if (editingOrderId) {
+        await ordersService.update(editingOrderId, {
+          pickup_date: newOrder.pickup_date,
+          notes: newOrder.notes,
+          customer: {
+            name: newOrder.customer_name,
+            phone: newOrder.customer_phone,
+            email: newOrder.customer_email,
+            address: newOrder.customer_address,
+          },
+          items: newOrder.items
+            .filter((item) => item.product_variant_id)
+            .map((item) => ({ product_variant_id: Number(item.product_variant_id), quantity: Number(item.quantity), notes: item.notes || null })),
+        });
+        setSuccess('Order dan item berhasil diperbarui. Total dihitung ulang oleh server.');
+        setEditingOrderId(null);
+        setIsCreateModalOpen(false);
+        await fetchOrders();
         return;
       }
 
@@ -225,6 +281,7 @@ export default function PreOrdersPage() {
       }
 
       setSuccess('Order berhasil dibuat');
+      setEditingOrderId(null);
       setIsCreateModalOpen(false);
       setNewOrder({
         customer_name: '',
@@ -253,8 +310,9 @@ export default function PreOrdersPage() {
     setError('');
     setSuccess('');
     try {
+      if (newStatus === 'confirmed' && !window.confirm('Konfirmasi order ini setelah customer menyatakan ingin melanjutkan? Status pembayaran tetap belum dibayar sampai dana diterima.')) return;
       await ordersService.updateStatus(orderId, newStatus);
-      setSuccess('Status order berhasil diperbarui');
+      setSuccess(newStatus === 'confirmed' ? 'Order dikonfirmasi. Status pembayaran tidak berubah.' : 'Status order berhasil diperbarui');
       fetchOrders();
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -571,9 +629,9 @@ export default function PreOrdersPage() {
       <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
         <div>
           <h1 className='text-2xl font-bold text-primary'>Manajemen Pre-Orders</h1>
-          <p className='text-primary/60 text-sm'>Kelola daftar pesanan kue masuk</p>
+          <p className='text-primary/60 text-sm'>Konfirmasi order setelah customer menyetujui. Verifikasi pembayaran secara terpisah; pembayaran tunai dicatat saat uang diterima.</p>
         </div>
-        <button onClick={() => setIsCreateModalOpen(true)} className='px-4 py-2 bg-tertiary text-primary rounded-lg font-semibold hover:bg-tertiary/90 transition shadow-sm text-sm'>
+        <button onClick={() => { setEditingOrderId(null); setNewOrder({ customer_name: '', customer_phone: '', customer_email: '', customer_address: '', pickup_date: '', notes: '', payment_method: 'cash', payment_option: 'full', rekening_id: '', proof_file: null, proof_preview: '', payment_proof: '', items: [{ product_variant_id: '', quantity: 1, notes: '' }] }); setIsCreateModalOpen(true); }} className='px-4 py-2 bg-tertiary text-primary rounded-lg font-semibold hover:bg-tertiary/90 transition shadow-sm text-sm'>
           + Buat Order Baru
         </button>
       </div>
@@ -592,6 +650,7 @@ export default function PreOrdersPage() {
           <select value={statusFilter} onChange={(e) => { setPage(1); setStatusFilter(e.target.value); }} className='bg-secondary/10 border border-secondary/25 rounded-lg px-3 py-1.5 text-sm text-primary focus:outline-none'>
             <option value=''>Semua Status</option>
             <option value='pending'>Pending</option>
+            <option value='confirmed'>Terkonfirmasi</option>
             <option value='processing'>Processing</option>
             <option value='ready'>Ready</option>
             <option value='completed'>Completed</option>
@@ -655,11 +714,12 @@ export default function PreOrdersPage() {
                         onChange={(e) => handleStatusChange(order.id, e.target.value)}
                         className='bg-secondary/10 border border-secondary/25 rounded-lg px-2.5 py-1 text-xs font-semibold text-primary capitalize focus:outline-none focus:ring-1 focus:ring-tertiary cursor-pointer'
                       >
-                        <option value='pending'>pending</option>
-                        <option value='processing'>processing</option>
-                        <option value='ready'>ready</option>
-                        <option value='completed'>completed</option>
-                        <option value='cancelled' disabled={['processing', 'ready', 'completed'].includes(order.status)}>cancelled</option>
+                        <option value='pending' disabled={order.status !== 'pending'}>pending</option>
+                        <option value='confirmed' disabled={order.status !== 'pending'}>confirmed</option>
+                        <option value='processing' disabled={order.status !== 'confirmed' || (order.payment_status === 'unpaid' && order.rekening_id)}>processing</option>
+                        <option value='ready' disabled={order.status !== 'processing'}>ready</option>
+                        <option value='completed' disabled={order.status !== 'ready' || order.payment_status !== 'paid'}>completed</option>
+                        <option value='cancelled' disabled={!['pending', 'confirmed'].includes(order.status)}>cancelled</option>
                       </select>
                     </td>
                     <td className='px-5 py-4'>
@@ -674,6 +734,8 @@ export default function PreOrdersPage() {
                       <button onClick={() => handleViewOrderDetails(order)} className='px-2.5 py-1 bg-secondary/20 text-primary hover:bg-secondary/30 rounded transition text-xs font-semibold'>
                         Detail
                       </button>
+                      {order.status === 'pending' && <button onClick={() => handleStatusChange(order.id, 'confirmed')} className='px-2.5 py-1 bg-green-100 text-green-800 hover:bg-green-200 rounded transition text-xs font-semibold'>Konfirmasi</button>}
+                      {['pending', 'confirmed'].includes(order.status) && <button onClick={() => handleEditOrder(order)} className='px-2.5 py-1 bg-amber-100 text-amber-800 hover:bg-amber-200 rounded transition text-xs font-semibold'>Edit</button>}
                       <button
                         onClick={() => {
                           setPaymentForm({
@@ -691,7 +753,7 @@ export default function PreOrdersPage() {
                             ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                             : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                         }`}>
-                        Bayar
+                        Catat Pembayaran
                       </button>
                       <button onClick={() => handleDelete(order.id)} className='px-2.5 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded transition text-xs font-semibold'>
                         Hapus
@@ -826,7 +888,8 @@ export default function PreOrdersPage() {
       {isCreateModalOpen && (
         <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm'>
           <div className='bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl relative text-primary max-h-[90vh] overflow-y-auto'>
-            <h2 className='text-xl font-bold mb-4'>Buat Order Pre-Order Baru</h2>
+            <h2 className='text-xl font-bold mb-2'>{editingOrderId ? 'Edit Order' : 'Buat Order Pre-Order Baru'}</h2>
+            {editingOrderId && <p className='mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900'>Perubahan item hanya bisa disimpan sebelum produksi dimulai. Total dihitung ulang menggunakan harga varian terbaru; pembayaran yang sudah diverifikasi tetap diperhitungkan.</p>}
             <form onSubmit={handleCreateSubmit} className='space-y-4 text-sm'>
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                 <div>
@@ -836,6 +899,7 @@ export default function PreOrdersPage() {
                   <input
                     type='text'
                     value={newOrder.customer_name}
+                    maxLength={100}
                     onChange={(e) => setNewOrder({ ...newOrder, customer_name: e.target.value })}
                     required
                     placeholder='Nama lengkap customer'
@@ -849,7 +913,9 @@ export default function PreOrdersPage() {
                   <input
                     type='tel'
                     value={newOrder.customer_phone}
-                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    required
+                    maxLength={20}
+                    onChange={(e) => editingOrderId ? setNewOrder((current) => ({ ...current, customer_phone: e.target.value.replace(/[^0-9]/g, '') })) : handlePhoneChange(e.target.value)}
                     onKeyDown={(e) => {
                       // Allow: digits, backspace, delete, tab, escape, enter, arrow keys
                       const key = e.key;
@@ -864,15 +930,16 @@ export default function PreOrdersPage() {
                 </div>
                 <div>
                   <label className='block text-xs font-medium text-primary/70 mb-1'>
-                    Email <span className='text-red-500'>*</span>
+                    Email {!editingOrderId && <span className='text-red-500'>*</span>}
                   </label>
                   <input
                     type='email'
                     value={newOrder.customer_email}
+                    maxLength={30}
                     onChange={(e) => setNewOrder({ ...newOrder, customer_email: e.target.value })}
                     placeholder='email@example.com'
                     className='w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-tertiary'
-                    required
+                    required={!editingOrderId}
                   />
                 </div>
                 <div>
@@ -889,15 +956,16 @@ export default function PreOrdersPage() {
                 </div>
                 <div className='sm:col-span-2'>
                   <label className='block text-xs font-medium text-primary/70 mb-1'>
-                    Alamat <span className='text-red-500'>*</span>
+                    Alamat {!editingOrderId && <span className='text-red-500'>*</span>}
                   </label>
                   <textarea
                     value={newOrder.customer_address}
+                    maxLength={100}
                     onChange={(e) => setNewOrder({ ...newOrder, customer_address: e.target.value })}
                     rows={2}
                     placeholder='Alamat lengkap customer...'
                     className='w-full bg-secondary/10 border border-secondary/25 rounded-lg py-2 px-3 text-sm focus:outline-none resize-y'
-                    required
+                    required={!editingOrderId}
                   />
 
                   {newOrder.customer_address.length >= 100 && <div className='p-4 rounded-lg bg-red-100 border border-red-200 text-red-700 text-sm'>Alamat tidak boleh lbih dari 100 karakter</div>}
@@ -972,7 +1040,7 @@ export default function PreOrdersPage() {
               </div>
 
               {/* Bagian Pembayaran di Paling Bawah */}
-              <div className='pt-2 border-t border-secondary/10 space-y-4'>
+              {!editingOrderId && <div className='pt-2 border-t border-secondary/10 space-y-4'>
                 <p className='text-xs font-bold text-primary uppercase tracking-wider'>Informasi Pembayaran</p>
 
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
@@ -1053,14 +1121,14 @@ export default function PreOrdersPage() {
                     )}
                   </div>
                 )}
-              </div>
+              </div>}
 
               <div className='flex justify-end gap-2 pt-4 border-t border-secondary/10'>
-                <button type='button' onClick={() => setIsCreateModalOpen(false)} className='px-4 py-2 rounded-lg border border-secondary/25 text-sm font-medium hover:bg-secondary/10 transition'>
+                <button type='button' onClick={() => { setIsCreateModalOpen(false); setEditingOrderId(null); }} className='px-4 py-2 rounded-lg border border-secondary/25 text-sm font-medium hover:bg-secondary/10 transition'>
                   Batal
                 </button>
                 <button type='submit' className='px-4 py-2 rounded-lg bg-tertiary text-primary text-sm font-semibold hover:bg-tertiary/90 transition shadow-sm'>
-                  Simpan Order
+                  {editingOrderId ? 'Simpan Perubahan' : 'Simpan Order'}
                 </button>
               </div>
             </form>
@@ -1073,6 +1141,7 @@ export default function PreOrdersPage() {
         <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm'>
           <div className='bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative text-primary'>
             <h2 className='text-lg font-bold mb-4'>Catat Pembayaran</h2>
+            <div className='mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900'>Simpan pembayaran hanya setelah dana benar-benar diterima. Untuk transfer, cocokkan mutasi rekening secara langsung; gambar bukti transfer saja belum menjadi konfirmasi.</div>
             <form onSubmit={handlePaymentSubmit} className='space-y-4 text-sm'>
               <div>
                 <label className='block text-xs font-medium text-primary/70 mb-1'>Pilih Opsi Pembayaran</label>

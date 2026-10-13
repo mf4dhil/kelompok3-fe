@@ -8,13 +8,13 @@ export default function WhyChoose() {
       icon: '🍰',
     },
     {
-      title: 'Custom Order',
-      description: 'Sesuaikan rasa & tema sesukamu',
+      title: 'Pilih Varian',
+      description: 'Tentukan bentuk, ukuran, dan rasa dari varian yang tersedia',
       icon: '📦',
     },
     {
-      title: 'On Time',
-      description: 'Pengiriman tepat waktu untuk acaramu',
+      title: 'Pengambilan Terjadwal',
+      description: 'Pilih tanggal pengambilan saat checkout agar pesanan siap sesuai jadwal',
       icon: '📅',
     },
   ];

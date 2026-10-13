@@ -105,6 +105,7 @@
 import { useEffect, useState } from "react";
 import { getCustomerProducts } from "../services/productService";
 import { useNavigate } from "react-router-dom";
+import { getProductImageUrl } from "../utils/productImage";
 
 export default function MenuFavorit() {
   const [menuItems, setMenuItems] = useState([]);
@@ -186,9 +187,10 @@ export default function MenuFavorit() {
                     <div className="h-40 bg-secondary/20 flex items-center justify-center">
                       {item.image ? (
                         <img
-                          src={item.image}
+                          src={getProductImageUrl(item.image)}
                           alt={item.name}
                           className="h-full w-full object-cover"
+                          onError={(event) => { event.currentTarget.style.display = "none"; }}
                         />
                       ) : (
                         <span className="text-4xl">🍰</span>
@@ -201,7 +203,7 @@ export default function MenuFavorit() {
                       </h3>
 
                       <p className="text-sm text-primary/70 line-clamp-2">
-                        {item.description || "Kue spesial CakeOrder"}
+                        {item.description || "Pilih varian kue yang sesuai untuk momen spesialmu."}
                       </p>
                     </div>
                   </div>

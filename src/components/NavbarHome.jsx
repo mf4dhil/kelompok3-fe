@@ -151,6 +151,7 @@ export default function NavbarHome() {
             <Link to="/#menu" onClick={goToSection('menu')} className="transition hover:text-tertiary">Menu</Link>
             <Link to="/#cara-po" onClick={goToSection('cara-po')} className="transition hover:text-tertiary">Cara PO</Link>
             <Link to="/#tentang" onClick={goToSection('tentang')} className="transition hover:text-tertiary">Tentang</Link>
+            <Link to="/lacak-pesanan" className="transition hover:text-tertiary">Lacak Pesanan</Link>
           </nav>
 
           {/* Aksi desktop */}
@@ -260,6 +261,14 @@ export default function NavbarHome() {
             className="block rounded-md px-3 py-2 text-quaternary hover:bg-secondary/20"
           >
             Tentang
+          </Link>
+
+          <Link
+            to="/lacak-pesanan"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block rounded-md px-3 py-2 text-quaternary hover:bg-secondary/20"
+          >
+            Lacak Pesanan
           </Link>
 
           <Link
