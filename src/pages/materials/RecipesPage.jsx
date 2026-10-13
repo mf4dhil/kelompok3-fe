@@ -6,7 +6,8 @@ import { materialService } from "../../services/materialService";
 const variantLabel = (variant) => {
   const parts = [variant.product?.name, variant.size?.name, variant.shape?.name, variant.flavor?.name]
     .filter(Boolean);
-  return `${parts.join(" · ")} (Varian #${variant.id})`;
+  const missingRecipe = !variant.recipe_items?.length;
+  return `${parts.join(" · ")} (Varian #${variant.id})${missingRecipe ? " · Resep belum diatur" : ""}`;
 };
 
 export default function RecipesPage() {
@@ -63,6 +64,10 @@ export default function RecipesPage() {
   const save = async (event) => {
     event.preventDefault();
     if (!selectedId) return;
+    if (items.length === 0) {
+      setError("Resep wajib memiliki minimal satu bahan baku.");
+      return;
+    }
     setSaving(true);
     setError("");
     setSuccess("");
@@ -87,7 +92,7 @@ export default function RecipesPage() {
     <main className="space-y-6">
       <header>
         <h1 className="text-2xl font-bold text-primary">Resep & Pemakaian Bahan</h1>
-        <p className="mt-1 text-sm text-primary/60">Atur kebutuhan bahan untuk satu varian kue. Stok berkurang otomatis saat pesanan dibuat.</p>
+        <p className="mt-1 text-sm text-primary/60">Atur kebutuhan bahan untuk satu varian kue. Stok berkurang otomatis saat pesanan mulai diproses.</p>
       </header>
 
       {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}

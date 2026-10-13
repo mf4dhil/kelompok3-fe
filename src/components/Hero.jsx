@@ -43,7 +43,7 @@ export default function Hero() {
           </div>
 
           <div className='flex justify-center'>
-            <div className='relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-2xl border border-secondary/20 bg-gradient-to-br from-secondary/15 via-quaternary to-tertiary/20 shadow-lg'>
+            <div className='relative aspect-4/3 w-full max-w-md overflow-hidden rounded-2xl border border-secondary/20 bg-linear-to-br from-secondary/15 via-quaternary to-tertiary/20 shadow-lg'>
               {featuredProduct?.image ? (
                 <img src={featuredProduct.image} alt={featuredProduct.name} className='h-full w-full object-cover' onError={() => setFeaturedProduct(null)} />
               ) : (
@@ -53,7 +53,7 @@ export default function Hero() {
                   <p className='mt-2 max-w-xs text-sm text-primary/60'>Foto produk akan tampil di sini setelah tersedia di katalog.</p>
                 </div>
               )}
-              {featuredProduct?.image && <div className='absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-5 pb-5 pt-12 text-white'>
+              {featuredProduct?.image && <div className='absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent px-5 pb-5 pt-12 text-white'>
                 <p className='text-xs font-medium uppercase tracking-wider text-white/75'>Pilihan dari katalog</p>
                 <p className='mt-1 text-xl font-semibold'>{featuredProduct.name}</p>
               </div>}

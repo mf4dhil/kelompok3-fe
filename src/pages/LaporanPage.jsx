@@ -226,6 +226,13 @@ export default function LaporanPage() {
   };
 
   const getPaymentStatusLabel = (status) => ({ verified: 'Terverifikasi', rejected: 'Ditolak', pending: 'Menunggu' }[status] || status || 'Menunggu');
+  const getPaymentTypeLabel = (type) => ({
+    dp: 'DP / Uang Muka',
+    partial: 'DP / Uang Muka',
+    repayment: 'Pelunasan',
+    settlement: 'Pelunasan',
+    full: 'Lunas Sekaligus',
+  }[String(type || 'full').toLowerCase()] || type || 'Lunas Sekaligus');
 
   const getOrderStatusBadge = (status) => {
     switch (status) {
@@ -829,7 +836,7 @@ export default function LaporanPage() {
                           )}
                         </td>
                         <td className='px-5 py-4'>
-                          <span className='text-xs uppercase font-semibold px-2 py-0.5 rounded bg-secondary/15 text-primary/80'>{p.payment_type || 'full'}</span>
+                          <span className='text-xs font-semibold px-2 py-0.5 rounded bg-secondary/15 text-primary/80'>{getPaymentTypeLabel(p.payment_type)}</span>
                         </td>
                         <td className='px-5 py-4 font-bold text-primary'>{formatIdr(p.amount)}</td>
                         <td className='px-5 py-4'>

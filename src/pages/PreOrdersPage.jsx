@@ -21,6 +21,7 @@ export default function PreOrdersPage() {
   const [paymentFilter, setPaymentFilter] = useState('');
   const [page, setPage] = useState(1);
   const [pageInfo, setPageInfo] = useState({ currentPage: 1, totalPages: 1, totalItems: 0 });
+  const [serverPaginated, setServerPaginated] = useState(true);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
 
@@ -62,6 +63,9 @@ export default function PreOrdersPage() {
   });
 
   const currentOrderForPayment = orders.find((o) => o.id === paymentForm.id);
+  const visibleOrders = serverPaginated
+    ? orders
+    : orders.slice((pageInfo.currentPage - 1) * PAGE_SIZE, pageInfo.currentPage * PAGE_SIZE);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -78,7 +82,17 @@ export default function PreOrdersPage() {
       // Handle pagination or array response
       const list = Array.isArray(res) ? res : res.data || res.orders || [];
       setOrders(list);
-      if (!Array.isArray(res)) setPageInfo({ currentPage: res.currentPage || page, totalPages: res.totalPages || 1, totalItems: res.totalItems || list.length });
+      const hasServerPagination = !Array.isArray(res) && Number.isFinite(Number(res.totalPages));
+      setServerPaginated(hasServerPagination);
+      const totalItems = Array.isArray(res) ? list.length : Number(res.totalItems ?? list.length);
+      const totalPages = hasServerPagination
+        ? Math.max(1, Number(res.totalPages) || 1)
+        : Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+      const currentPage = hasServerPagination
+        ? Math.min(Math.max(1, Number(res.currentPage) || page), totalPages)
+        : Math.min(page, totalPages);
+      setPageInfo({ currentPage, totalPages, totalItems });
+      if (currentPage !== page) setPage(currentPage);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
@@ -319,6 +333,19 @@ export default function PreOrdersPage() {
     }
   };
 
+  const handleSyncOrderStock = async (order) => {
+    if (!window.confirm(`Sinkronkan pemakaian bahan untuk order ${order.order_number}? Stok hanya akan dikurangi untuk resep yang belum tercatat.`)) return;
+    setError('');
+    setSuccess('');
+    try {
+      await ordersService.updateStatus(order.id, 'processing');
+      setSuccess(`Stok untuk order ${order.order_number} berhasil disinkronkan.`);
+      await fetchOrders();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Gagal menyinkronkan stok order');
+    }
+  };
+
   const handleViewOrderDetails = async (order) => {
     setSelectedOrder(order);
     setIsDetailModalOpen(true);
@@ -540,12 +567,13 @@ export default function PreOrdersPage() {
     try {
       const formData = new FormData();
       formData.append('order_id', paymentForm.id);
-      // Hitung amount berdasarkan opsi: full = total order, dp = 50% total order
+      // Backend menghitung sisa tagihan untuk pelunasan; DP awal sebesar 50%.
       const totalAmount = selectedOrder?.total_amount || 0;
-      const paymentAmount = paymentForm.payment_option === 'dp' ? Math.ceil(totalAmount * 0.5) : totalAmount;
-      formData.append('amount', paymentAmount);
+      if (paymentForm.payment_option === 'dp') {
+        formData.append('amount', Math.ceil(totalAmount * 0.5));
+      }
       formData.append('payment_method', paymentForm.payment_method);
-      formData.append('payment_type', paymentForm.payment_option); // 'full' atau 'partial'
+      formData.append('payment_type', paymentForm.payment_option);
       if (paymentForm.payment_method === 'transfer' && paymentForm.rekening_id) {
         formData.append('rekening_id', parseInt(paymentForm.rekening_id));
       }
@@ -587,7 +615,14 @@ export default function PreOrdersPage() {
       }
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || err.message || 'Gagal memperbarui pembayaran');
+      const message = err.response?.data?.message || err.message || 'Gagal memperbarui pembayaran';
+      if (err.response?.status === 409) {
+        setIsPaymentModalOpen(false);
+        setSuccess(message);
+        await fetchOrders();
+      } else {
+        setError(message);
+      }
     }
   };
 
@@ -671,9 +706,9 @@ export default function PreOrdersPage() {
       {!loading && pageInfo.totalItems > 0 && <div className='flex items-center justify-between text-sm text-primary/65'>
         <span>Menampilkan {(pageInfo.currentPage - 1) * PAGE_SIZE + 1}–{Math.min(pageInfo.currentPage * PAGE_SIZE, pageInfo.totalItems)} dari {pageInfo.totalItems} PO</span>
         <div className='flex items-center gap-3'>
-          <button type='button' onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page <= 1} className='rounded-lg border px-3 py-1.5 disabled:opacity-40'>Sebelumnya</button>
+          <button type='button' onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={pageInfo.currentPage <= 1} className='rounded-lg border px-3 py-1.5 disabled:opacity-40'>Sebelumnya</button>
           <span>Halaman {pageInfo.currentPage} dari {pageInfo.totalPages}</span>
-          <button type='button' onClick={() => setPage((current) => Math.min(pageInfo.totalPages, current + 1))} disabled={page >= pageInfo.totalPages} className='rounded-lg border px-3 py-1.5 disabled:opacity-40'>Selanjutnya</button>
+          <button type='button' onClick={() => setPage((current) => Math.min(pageInfo.totalPages, current + 1))} disabled={pageInfo.currentPage >= pageInfo.totalPages} className='rounded-lg border px-3 py-1.5 disabled:opacity-40'>Selanjutnya</button>
         </div>
       </div>}
 
@@ -681,7 +716,7 @@ export default function PreOrdersPage() {
       <div className='bg-white rounded-xl border border-secondary/20 overflow-hidden shadow-sm'>
         {loading ? (
           <div className='p-8 text-center text-primary/50'>Memuat data orders...</div>
-        ) : orders.length === 0 ? (
+        ) : visibleOrders.length === 0 ? (
           <div className='p-8 text-center text-primary/50'>Belum ada order.</div>
         ) : (
           <div className='overflow-x-auto'>
@@ -700,12 +735,12 @@ export default function PreOrdersPage() {
                 </tr>
               </thead>
               <tbody className='divide-y divide-secondary/10'>
-                {orders.map((order, index) => (
+                {visibleOrders.map((order, index) => (
                   <tr key={order.id} className='hover:bg-quaternary/50 transition'>
                     <td className='px-5 py-4 font-mono text-xs font-bold text-primary'>{(pageInfo.currentPage - 1) * PAGE_SIZE + index + 1}</td>
                     <td className='px-5 py-4 font-mono text-xs font-bold text-primary'>{order.order_number}</td>
                     <td className='px-5 py-4 font-medium text-primary'>{order.Customer?.name || order.customer?.name || '-'}</td>
-                    <td className='px-5 py-4 font-medium text-primary text-wrap max-w-12 overflow-hidden '>{order.Customer?.address || order.customer?.address}</td>
+                    <td className='px-5 py-4 font-medium text-primary text-wrap max-w-28 overflow-hidden '>{order.Customer?.address || order.customer?.address}</td>
                     <td className='px-5 py-4 text-primary/80'>{order.pickup_date}</td>
                     <td className='px-5 py-4 font-semibold text-primary'>{formatCurrency(order.total_amount)}</td>
                     <td className='px-5 py-4'>
@@ -735,6 +770,7 @@ export default function PreOrdersPage() {
                         Detail
                       </button>
                       {order.status === 'pending' && <button onClick={() => handleStatusChange(order.id, 'confirmed')} className='px-2.5 py-1 bg-green-100 text-green-800 hover:bg-green-200 rounded transition text-xs font-semibold'>Konfirmasi</button>}
+                      {order.status === 'processing' && <button onClick={() => handleSyncOrderStock(order)} className='px-2.5 py-1 bg-indigo-100 text-indigo-800 hover:bg-indigo-200 rounded transition text-xs font-semibold' title='Sinkronkan pemakaian resep ke stok'>Sinkronkan Stok</button>}
                       {['pending', 'confirmed'].includes(order.status) && <button onClick={() => handleEditOrder(order)} className='px-2.5 py-1 bg-amber-100 text-amber-800 hover:bg-amber-200 rounded transition text-xs font-semibold'>Edit</button>}
                       <button
                         onClick={() => {
@@ -743,7 +779,7 @@ export default function PreOrdersPage() {
                             payment_method: order.payment_method || 'cash',
                             rekening_id: order.rekening_id || '',
                             payment_proof: order.payment_proof || '',
-                            payment_option: 'dp',
+                            payment_option: order.payment_status === 'partial' ? 'full' : 'dp',
                           });
                           setIsPaymentModalOpen(true);
                         }}
